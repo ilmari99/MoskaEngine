@@ -2,8 +2,6 @@ import unittest
 from collections import Counter
 import sys
 import os
-# Add parent of parent folder to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from MoskaEngine.Game.Deck import Card, StandardDeck
 
 class TestCard(unittest.TestCase):
