@@ -1,5 +1,4 @@
 from __future__ import annotations
-from functools import wraps
 from typing import Any, Callable, Iterable, List, TYPE_CHECKING, Sequence
 if TYPE_CHECKING:
     from .Deck import Card
@@ -67,41 +66,6 @@ def check_can_fall_card(played_card : Card, fall_card : Card,trump : str) -> boo
             success = True
     return success
 
-def announce_new_card(self) -> None:
-    """ DEPRECATED
-    Change all players ready -state to False.
-    This is called, when new values are played to the table.
-    """
-    for pl in self.moskaGame.players:
-        pl.ready = False
-    return
-
-def check_new_card(func : Callable) -> Callable:
-    """A wrapper, that checks the state of the game before the function is applied and after the function is applied.
-    If the length of playable cards (set of values in the table) has changed, then changes all the players ready -states to False.
-    
-    NOTE and TODO: This wrapper is in a weird place, and it can only be wrapped to methods of MoskaPlayer.
-
-    DEPRECATED
-
-    Args:
-        func (Callable): The function to wrap
-
-    Returns:
-        Callable: The wrapped function
-    """
-    wraps(func)
-    def wrap(*args,**kwargs):
-        #assert isinstance(args[0],MoskaPlayerBase), "The decorated function must have a reference to an instance of MoskaPlayerBase as the first positional argument."
-        state = args[0]._playable_values_to_table()
-        out = func(*args,**kwargs)
-        new_state = args[0]._playable_values_to_table()
-        if len(state) != len(new_state):
-            announce_new_card(args[0])
-        return out
-    return wrap
-    
-    
 
 class TurnCycle:
     """An implementation of a list-like structure, that loops over the list, if an index > len() is given.
