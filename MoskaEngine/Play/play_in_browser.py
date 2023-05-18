@@ -1,20 +1,14 @@
 #!/usr/bin/env python3
+import argparse
 import logging
 import os
 import sys
-# Add the parent directory to the path if it is not there yet
-#path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#if path not in sys.path:
-#    sys.path.append(path)
 import sys
 from ..Game.Game import MoskaGame
 from ..Player.HumanBrowserPlayer import HumanBrowserPlayer
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 from ..Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
 from ..Player.HumanJsonPlayer import HumanJsonPlayer
-path = os.path.dirname(os.path.abspath(__file__))
-if path not in sys.path:
-    sys.path.append(path)
 from .Utils import args_to_gamekwargs, make_log_dir,get_random_players, replace_setting_values
 from .PlayerWrapper import PlayerWrapper
 from argparse import ArgumentParser
@@ -152,45 +146,25 @@ def play_as_human(model_path = "./Models/Model-nn1-fuller/model.tflite",
     os.chdir(cwd)
     return out
 
-def parse_args():
-    """ Parses the command line arguments:
+def parse_args(inp : List[str],skip_first = True):
+    """ Parse a string of arguments, typically from the command line:
+    inp = ["<program>", "--name", "Human", "--gameid", "0", "--test"]
+    ignores the program name, and returns a namespace with the following attributes:
     - name : The name of the human player. Used in file naming and location.
     - gameid : The id of the game. Used in file naming and location.
     - test : Whether to actually use a human player or not
     """
-    parser = ArgumentParser(description='Play as a human against a NNHIFEvaluatorBot')
-    parser.add_argument('--name', type=str, default="Human",
-                        help='The name of the human player')
-    parser.add_argument('--gameid', type=int, default=0,
-                        help='The id of the game')
-    parser.add_argument('--test', type=bool, default=False,
-                        help='Whether to actually use a human player or not')
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser(description="Play as a human against three NNHIFEvaluatorBots")
+    parser.add_argument("--name", type=str, default="Human", help="The name of the human player. Used in file naming and location.")
+    parser.add_argument("--gameid", type=int, default=0, help="The id of the game. Used in file naming and location.")
+    parser.add_argument("--test", action="store_true", help="Whether to actually use a human player or not")
+    args = parser.parse_args(inp[1:] if skip_first else inp)
     return args
 
-def parse_args_from_string(args : str):
-    """Parse command line arguments from a string.
-
-    Args:
-        args (str): Argument, such as "--name Human --gameid 0"
-    """
-    parser = ArgumentParser(description='Play as a human against a NNHIFEvaluatorBot')
-    parser.add_argument('--name', type=str, default="Human",
-                        help='The name of the human player')
-    parser.add_argument('--gameid', type=int, default=0,
-                        help='The id of the game')
-    parser.add_argument('--test', type=bool, default=False,
-                        help='Whether to actually use a human player or not')
-    args = parser.parse_args(args.split())
-    return args
 
 # This can be imported and run as a function with a string of arguments
-def run_as_command_line_program(argument : str):
-    """
-    Run similarly to a cmd command, with arguments supplied as a string.
-    """
-    # --name Human --gameid 0
-    args = parse_args_from_string(argument)
+def run_as_command_line_program(args):
+    args = parse_args(args)
     out = play_as_human(model_path = os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite",
                         human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
@@ -200,7 +174,7 @@ def run_as_command_line_program(argument : str):
 
 # This can be run as a command line program
 if __name__ == "__main__":
-    args = parse_args()
+    args = parse_args(sys.argv)
     out = play_as_human(model_path = os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite",
                         human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
