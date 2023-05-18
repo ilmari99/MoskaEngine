@@ -2,13 +2,12 @@
 import logging
 import os
 import sys
+from typing import Any, Dict
 import warnings
-# Add the parent directory to the path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 import sys
-from Simulate import play_games, get_loss_percents
-from Utils import make_log_dir, get_random_players
+from .Simulate import play_games, get_loss_percents
+from .Utils import make_log_dir, get_random_players
 
 def create_dataset(nrounds : int,
                    num_games : int,
@@ -17,39 +16,45 @@ def create_dataset(nrounds : int,
                    chunksize : int = 4,
                    use_HIF : bool = False,
                    verbose : bool=True,
-                   players = "random"
-                   ):
+                   nplayers : int = 4,
+                   players = "random",
+                   gamekwargs : Dict[str,Any] = {},
+                   shared_player_kwargs : Dict[str,Any] = {}
+                   ) -> int:
     """Creates a dataset by playing games between random players.
     """
     if os.path.exists(folder):
         warnings.warn(f"Folder {folder} already exists. Overwriting.")
+    if nplayers != 4:
+        raise NotImplementedError("Only 4 players supported at the moment.")
     CWD = os.getcwd()
     model_paths = [os.environ["MOSKA_ROOT_PATH"]+"/Models/Model-nn1-BB/model.tflite",
                       os.environ["MOSKA_ROOT_PATH"] +"/Models/ModelNN1/model.tflite"]
     model_paths = [os.path.abspath(p) for p in model_paths]
     gamekwargs = {
-        "log_file" : "Game-{x}.log",
+        **{"log_file" : "Game-{x}.log",
         "log_level" : logging.DEBUG,
         "timeout" : 30,
         "gather_data":True,
-        "model_paths":model_paths,
+        "model_paths":model_paths,},
+        **gamekwargs
     }
     print(f"Creating dataset with {nrounds} rounds and {num_games} games per round.")
     print(f"Total games: {nrounds*num_games}.")
     print(f"Using {cpus} cpus and chunksize {chunksize}.")
     print(f"Using HIF: {use_HIF}.")
-    print(f"Game kwargs: ")
-    for k,v in gamekwargs.items():
-        print(f"\t{k}: {v}")
     time_taken = 0
+    nsuccesful = 0
     for i in range(nrounds):
         start_time = time.time()
-        acting_players = get_random_players(4, use_HIF=use_HIF) if players == "random" else players
+        acting_players = get_random_players(nplayers, use_HIF=use_HIF,shared_kwargs=shared_player_kwargs) if players == "random" else players
         print(f"Round {i+1} players:")
         for p in acting_players:
             print(p)
         make_log_dir(folder,append=True)
         results = play_games(acting_players, gamekwargs, ngames=num_games, cpus=cpus, chunksize=chunksize,shuffle_player_order=True,verbose=verbose)
+        print(results)
+        nsuccesful += len(tuple(filter(lambda x: x is not None, results)))
         os.chdir(CWD)
         if not verbose:
             get_loss_percents(results)
@@ -58,10 +63,9 @@ def create_dataset(nrounds : int,
         print(f"Round {i+1} took {end_time - start_time} seconds.")
         print(f"Estimated time remaining: {(time_taken/(i+1) * (nrounds - i-1))/60} minutes.")
     print(f"Finished. Total time taken: {time_taken/60} minutes.")
-    return
+    return nsuccesful
 
 if __name__ == "__main__":
     folder = "./Dataset"
-    #players = get_four_players_that_are_NewRandomPlayers()
     players = "random"
     create_dataset(nrounds=2,num_games=10,chunksize=3,folder=folder,cpus=5,use_HIF=False,players=players,verbose=False)
