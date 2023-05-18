@@ -6,20 +6,20 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import sys
 from typing import Any, Callable, Dict, Iterable, List, Tuple, TYPE_CHECKING
-from Game.Game import MoskaGame
-from Player.AbstractPlayer import AbstractPlayer
-from Player.HumanPlayer import HumanPlayer
-from Player.MoskaBot3 import MoskaBot3
-from Player.MoskaBot2 import MoskaBot2
-from Player.MoskaBot0 import MoskaBot0
-from Player.MoskaBot1 import MoskaBot1
-from Player.RandomPlayer import RandomPlayer
-from Player.NewRandomPlayer import NewRandomPlayer
-from Player.NNEvaluatorBot import NNEvaluatorBot
-from Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
-from Player.HeuristicEvaluatorBot import HeuristicEvaluatorBot
+from ..Game.Game import MoskaGame
+from ..Player.AbstractPlayer import AbstractPlayer
+from ..Player.HumanPlayer import HumanPlayer
+from ..Player.MoskaBot3 import MoskaBot3
+from ..Player.MoskaBot2 import MoskaBot2
+from ..Player.MoskaBot0 import MoskaBot0
+from ..Player.MoskaBot1 import MoskaBot1
+from ..Player.RandomPlayer import RandomPlayer
+from ..Player.NewRandomPlayer import NewRandomPlayer
+from ..Player.NNEvaluatorBot import NNEvaluatorBot
+from ..Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
+from ..Player.HeuristicEvaluatorBot import HeuristicEvaluatorBot
 if TYPE_CHECKING:
-    from PlayerWrapper import PlayerWrapper
+    from .PlayerWrapper import PlayerWrapper
 import random
 
 """
@@ -129,7 +129,7 @@ def get_random_players(nplayers : int, shared_kwargs : Dict = {}, use_HIF : bool
     """ Return a list of PlayerWrappers with random parameters.
     """
     # Due to import conflict
-    from PlayerWrapper import PlayerWrapper
+    from .PlayerWrapper import PlayerWrapper
     shared_kwargs_default = {
         "log_level" : logging.WARNING,
     }
@@ -208,21 +208,21 @@ def get_random_players(nplayers : int, shared_kwargs : Dict = {}, use_HIF : bool
         much_players.append((NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : f"NNHIFEV",
                                             "max_num_states":random.randint(1,10000),
                                             "max_num_samples":random.randint(10,1000),
-                                            "pred_format":"new-algbr",
-                                            "model_id":nn_models[1],
+                                            "pred_format":nn_models[1][1],
+                                            "model_id":nn_models[1][0],
                                             }}))
         
         much_players.append((NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : f"NNHIFEV2",
                                             "max_num_states":random.randint(1,10000),
                                             "max_num_samples":random.randint(10,1000),
-                                            "pred_format":"new-algbr",
-                                            "model_id":nn_models[1],
+                                            "pred_format":nn_models[1][1],
+                                            "model_id":nn_models[1][0],
                                             }}))
         much_players.append((NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : f"NNHIFEV3",
                                             "max_num_states":random.randint(1,10000),
                                             "max_num_samples":random.randint(10,1000),
-                                            "pred_format":"new-algbr",
-                                            "model_id":nn_models[1],
+                                            "pred_format":nn_models[1][1],
+                                            "model_id":nn_models[1][0],
                                             }}))
     
     acting_players = random.sample(much_players, nplayers)
