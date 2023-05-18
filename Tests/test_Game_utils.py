@@ -2,8 +2,6 @@ import unittest
 from typing import Sequence, List, Iterable
 import sys
 import os
-# Add parent of parent folder to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from MoskaEngine.Game.utils import check_signature, add_before, suit_to_symbol, check_can_fall_card
 from MoskaEngine.Game.Deck import Card
 
