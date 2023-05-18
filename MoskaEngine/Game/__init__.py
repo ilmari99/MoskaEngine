@@ -3,7 +3,7 @@ import sys
 def __initialize_pkg__():
     # Add the parent parent folder to the path
     MRP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.append(MRP)
+    #sys.path.append(MRP)
     # Define the path to the root folder of this library
     MOSKA_ROOT_PATH = MRP
     os.environ["MOSKA_ROOT_PATH"] = MOSKA_ROOT_PATH
