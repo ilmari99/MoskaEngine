@@ -3,20 +3,20 @@ import logging
 import os
 import sys
 # Add the parent directory to the path if it is not there yet
-path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if path not in sys.path:
-    sys.path.append(path)
+#path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#if path not in sys.path:
+#    sys.path.append(path)
 import sys
-from Game.Game import MoskaGame
-from Player.HumanBrowserPlayer import HumanBrowserPlayer
+from ..Game.Game import MoskaGame
+from ..Player.HumanBrowserPlayer import HumanBrowserPlayer
 from typing import Any, Callable, Dict, Iterable, List, Tuple
-from Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
-from Player.HumanJsonPlayer import HumanJsonPlayer
+from ..Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
+from ..Player.HumanJsonPlayer import HumanJsonPlayer
 path = os.path.dirname(os.path.abspath(__file__))
 if path not in sys.path:
     sys.path.append(path)
-from Utils import args_to_gamekwargs, make_log_dir,get_random_players, replace_setting_values
-from PlayerWrapper import PlayerWrapper
+from .Utils import args_to_gamekwargs, make_log_dir,get_random_players, replace_setting_values
+from .PlayerWrapper import PlayerWrapper
 from argparse import ArgumentParser
 import sys
 

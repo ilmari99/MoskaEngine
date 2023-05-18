@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 import logging
 import os
-import sys
 import time
-import sys
-from Game.Game import MoskaGame
-from Player.HumanPlayer import HumanPlayer
+from ..Game.Game import MoskaGame
+from ..Player.HumanPlayer import HumanPlayer
 from typing import Any, Callable, Dict, Iterable, List, Tuple
-from Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
-path = os.path.dirname(os.path.abspath(__file__))
-if path not in sys.path:
-    sys.path.append(path)
-from Utils import args_to_gamekwargs, make_log_dir, replace_setting_values
-from PlayerWrapper import PlayerWrapper
+from ..Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
+from .Utils import args_to_gamekwargs, make_log_dir, replace_setting_values
+from .PlayerWrapper import PlayerWrapper
 
 def get_human_players(model_path : str = "model.tflite",
                       pred_format : str = "bitmap",
