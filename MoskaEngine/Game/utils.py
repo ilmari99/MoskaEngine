@@ -9,9 +9,11 @@ CARD_SUIT_SYMBOLS = {"S":'♠', "D":'♦',"H": '♥',"C": '♣',"X":"X"}    #Con
 MAIN_DECK = None                                            # The main deck
 
 def check_signature(sig : Sequence, inp : Sequence) -> bool:
-    """ Check whether the input sequences types match the expected sequence."""
+    """ Check whether the input sequences types match the expected sequence.
+    """
     for s, i in zip(sig,inp):
-        if not isinstance(i,s):
+        if not issubclass(type(i),s):
+            print("Expected type",s,"got",type(i))
             return False
     return True
 

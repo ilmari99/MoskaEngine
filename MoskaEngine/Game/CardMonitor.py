@@ -2,7 +2,7 @@ from __future__ import annotations
 import itertools
 import random
 from typing import TYPE_CHECKING, List, Tuple
-from Player.AbstractPlayer import AbstractPlayer
+from ..Player.AbstractPlayer import AbstractPlayer
 from .Deck import Card, StandardDeck
 from .utils import check_can_fall_card
 if TYPE_CHECKING:

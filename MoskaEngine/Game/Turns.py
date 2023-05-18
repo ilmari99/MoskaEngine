@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, TYPE_CHECKING, Dict, List
 from collections import Counter
 from .Deck import Card
-from Player.AbstractPlayer import AbstractPlayer
+from ..Player.AbstractPlayer import AbstractPlayer
 if TYPE_CHECKING:
     from .Game import MoskaGame
 from . import utils

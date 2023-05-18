@@ -5,10 +5,10 @@ import os
 import time
 # Add the parent directory to the path
 import sys
-parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-print(parent_path)
+#parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#print(parent_path)
 #sys.path.append(parent_path)
-from Player.AbstractPlayer import AbstractPlayer
+from ..Player.AbstractPlayer import AbstractPlayer
 
 from .GameState import FullGameState
 from . import utils
@@ -379,10 +379,9 @@ class MoskaGame:
             try:
                 move_call(*args[1:])
             except AssertionError as ae:
-                #self.glog.warning(f"{player.name}:{ae}")
+                
                 return False, str(ae)
             except TypeError as te:
-                #self.glog.warning(f"{player.name}:{te}")
                 return False, str(te)
             self.card_monitor.update_from_move(move,args[1:])
             return True, ""
