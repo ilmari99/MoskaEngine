@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
-from Game.Deck import Card
+from ..Game.Deck import Card
 from ._ScoreCards import _ScoreCards
 if TYPE_CHECKING:
     from ..Game.Game import MoskaGame

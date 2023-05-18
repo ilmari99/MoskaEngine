@@ -1,7 +1,7 @@
 from typing import Callable, Dict, List, Tuple, Set
 import numpy as np
-from Game.Deck import Card
-from Game import utils
+from ..Game.Deck import Card
+from ..Game import utils
 
 class Assignment:
     """ An assignment is a mapping from cards in the hand to cards on the table.

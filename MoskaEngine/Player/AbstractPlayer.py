@@ -4,12 +4,12 @@ import os
 import random
 import numpy as np
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Set, Tuple
-from Game.GameState import FullGameState
-from Game.Deck import Card
+from ..Game.GameState import FullGameState
+from ..Game.Deck import Card
 if TYPE_CHECKING:   # False at runtime, since we only need MoskaGame for typechecking
     from ..Game.Game import MoskaGame
-from Game.Hand import MoskaHand
-from Game import utils
+from ..Game.Hand import MoskaHand
+from ..Game import utils
 from .utils import _make_cost_matrix, _map_each_to_list, _map_to_list
 import threading
 import time

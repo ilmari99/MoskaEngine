@@ -4,12 +4,12 @@ import itertools
 import logging
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
-from Game.Deck import Card
+from ..Game.Deck import Card
 if TYPE_CHECKING:
     from ..Game.Game import MoskaGame
 from .AbstractPlayer import AbstractPlayer
-from Game.utils import check_can_fall_card
-from Game.GameState import FullGameState
+from ..Game.utils import check_can_fall_card
+from ..Game.GameState import FullGameState
 
 class NewRandomPlayer(AbstractPlayer):
     def __init__(self, moskaGame: MoskaGame = None, name: str = "", delay=0, requires_graphic: bool = False, log_level=logging.INFO, log_file=""):

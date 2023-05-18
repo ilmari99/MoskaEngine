@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List
 from .AbstractPlayer import AbstractPlayer
-from Game.Deck import Card
+from ..Game.Deck import Card
 if TYPE_CHECKING:   # False at runtime, since we only need MoskaGame for typechecking
-    from Game.Game import MoskaGame
+    from ..Game.Game import MoskaGame
 import logging
 
 class HumanBrowserPlayer(AbstractPlayer):
