@@ -3,15 +3,15 @@ import logging
 import os
 import sys
 # Add the parent directory to the path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 import sys
-from Game.Game import MoskaGame
-from Player.AbstractPlayer import AbstractPlayer
+from ..Game.Game import MoskaGame
+from ..Player.AbstractPlayer import AbstractPlayer
 import multiprocessing
 from typing import Any, Callable, Dict, Iterable, List, Tuple
-from Utils import args_to_gamekwargs
-from PlayerWrapper import PlayerWrapper
+from .Utils import args_to_gamekwargs
+from .PlayerWrapper import PlayerWrapper
 
 """This file contains simulation utility functions for playing (multiple) games of Moska."""
 
