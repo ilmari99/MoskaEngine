@@ -1,12 +1,8 @@
 import os
 import sys
-# Add the parent directory to the path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import time
-import sys
-from Player.AbstractPlayer import AbstractPlayer
+from ..Player.AbstractPlayer import AbstractPlayer
 from typing import Any, Callable, Dict, Iterable, List, Tuple
-from Utils import replace_setting_values, CLASS_MAP
+from .Utils import replace_setting_values, CLASS_MAP
 import json
 """
 This file contains the PlayerWrapper class, which is used to wrap a player class and settings into a single object.
@@ -20,8 +16,8 @@ class PlayerWrapper:
     def __init__(self, player_class: AbstractPlayer, settings: Dict[str, Any], infer_log_file = False, number = -1):
         """ Settings should have '{x}' somewhere in it, which will be replaced by the game number.
         """
-        if not issubclass(player_class, AbstractPlayer):
-            raise TypeError(f"Player class must be a subclass of AbstractPlayer, but is {player_class}")
+        if not issubclass(player_class,AbstractPlayer):
+            raise ValueError(f"Player class {player_class} is not recognized as any subclass of {AbstractPlayer}")
         if not isinstance(settings, dict):
             raise TypeError(f"Settings must be a dict, but is {settings}")
         if infer_log_file and not 'log_file' in settings:
@@ -58,10 +54,12 @@ class PlayerWrapper:
         # Convert to absolute path if needed
         # This is very hacky, but again the processes are spawned in a weird way in the multiprocessing module.
         if "model_id" in settings and not settings["model_id"].isnumeric():
+            # First search from given path. If not found search MOSKA_ROOT_PATH
+            given_path = settings["model_id"]
             if not os.path.isfile(settings["model_id"]):
-                settings["model_id"] = "." + settings["model_id"]
+                settings["model_id"] = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + given_path.strip("."))
             if not os.path.isfile(settings["model_id"]):
-                raise FileNotFoundError(f"Model file {settings['model_id']} not found.")
+                raise FileNotFoundError(f"Model file {given_path} OR {settings['model_id']} not found.")
             settings["model_id"] = os.path.abspath(settings["model_id"])
         settings.update(kwarg_overwrite)
         player_class = CLASS_MAP[player_class]
