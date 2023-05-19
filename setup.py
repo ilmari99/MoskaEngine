@@ -8,7 +8,7 @@ requirements = [
 
 setup(
     name='MoskaEngine',
-    version='0.1.3',
+    version='0.1.4',
     description='A card game engine for the card game Moska. Contains game engine, players, simulation tools, and human interface.',
     author='Ilmari Vahteristo',
     url="https://github.com/ilmari99/MoskaEngine",
