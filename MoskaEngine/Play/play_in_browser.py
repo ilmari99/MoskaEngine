@@ -5,7 +5,6 @@ import os
 import sys
 import sys
 from ..Game.Game import MoskaGame
-from ..Player.HumanBrowserPlayer import HumanBrowserPlayer
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 from ..Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
 from ..Player.HumanJsonPlayer import HumanJsonPlayer
