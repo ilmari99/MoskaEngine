@@ -3,24 +3,19 @@ import functools
 import json
 import os
 import time
-# Add the parent directory to the path
-import sys
-#parent_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-#print(parent_path)
-#sys.path.append(parent_path)
-from ..Player.AbstractPlayer import AbstractPlayer
-
-from .GameState import FullGameState
-from . import utils
-import numpy as np
-from typing import Any, Callable, Dict, Generator, List, Tuple
-from .Deck import Card, StandardDeck
-from .CardMonitor import CardMonitor
 import threading
 import logging
 import random
+import numpy as np
+from typing import Any, Callable, Dict, Generator, List, Tuple
+
+from ..Player.AbstractPlayer import AbstractPlayer
+from .GameState import FullGameState
+from . import utils
+from .Deck import Card, StandardDeck
+from .CardMonitor import CardMonitor
 #import tensorflow as tf is done at set_model_vars_from_path IF a path is given.
-# This is to gain a speedup when not using tensorflow
+# This is to gain a speedup if not using tensorflow
 from .Turns import PlayFallFromDeck, PlayFallFromHand, PlayToOther, InitialPlay, EndTurn, PlayToSelf, Skip, PlayToSelfFromDeck
 
 
@@ -107,15 +102,11 @@ class MoskaGame:
         self.print_format = print_format
         self.player_evals_data : Dict[int,List[int]] = {}
         self.threads = {}
-        # These are leftovers from debugging
-        if self.players or self.nplayers > 0:
-            print("LEFTOVER PLAYERS FOUND!!!!!!!!!!!!!")
-        if self.card_monitor is not None:
-            print("LEFTOVER card_monitor!!!!!!!!!!!!1")
-        if self.threads:
-            print("LEFTOVER THREAD!!!!!")
         self.log_level = log_level
         self.log_file = log_file if log_file else os.devnull
+        self.interpreters = []
+        self.input_details = []
+        self.output_details = []
         self.model_paths = model_paths
         self.set_model_vars_from_paths()
         self.random_seed = random_seed if random_seed else int(10000000*random.random())
@@ -136,14 +127,15 @@ class MoskaGame:
         """
         if isinstance(self.model_paths,str):
             self.model_paths = [self.model_paths] if self.model_paths else []
-        # remove "" paths
-        self.model_paths = [path for path in self.model_paths if path]
         self.interpreters = []
         self.input_details = []
         self.output_details = []
-        if not self.model_paths:
-            self.glog.info("No model paths given, not loading any models.")
-            return
+        # Loop through the model paths, and convert shorthands to absolute paths and check that they all exist
+        orig_paths = self.model_paths
+        self.model_paths = [utils.get_model_file(path) for path in self.model_paths]
+        for i, path in enumerate(self.model_paths):
+            if not path:
+                utils.raise_model_not_found_error(orig_paths[i])
         self.glog.debug("Importing Tensorflow and loading models from paths: {}".format(self.model_paths))
         # We import tensorflow only if there are models to load! This speeds up the process.
         # This also allows the user to run the game without tensorflow installed.
@@ -718,6 +710,11 @@ class MoskaGame:
         active = self.get_target_player()
         ptr = int(self.turnCycle.ptr)
         out = self.turnCycle.get_prev_condition(cond = lambda x : x.rank is None and x is not active,incr_ptr=False)
+        # This can happen, if a player has just finished, then for a short while the player is both the target and the initiating player.
+        if not out:
+            out = self.turnCycle.get_prev_condition(cond = lambda x : x.rank is None,incr_ptr=False)
+        if not out:
+            raise RuntimeError("No initiating player found.")
         assert self.turnCycle.ptr == ptr, "Problem with turnCycle"
         return out
     
