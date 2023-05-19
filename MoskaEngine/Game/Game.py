@@ -416,7 +416,7 @@ class MoskaGame:
                         return x.name
                     elif isinstance(x,Callable):
                         return ""
-                    if self.in_web and x and (isinstance(x,(list,tuple)) and isinstance(x[0],Card)) or (isinstance(x,dict) and isinstance(list(x.keys())[0], Card)):
+                    if self.in_web and x and isinstance(x,(list,tuple,dict)) and len(x) > 0:
                         if isinstance(x,dict):
                             return {k.as_str(symbol=False):v.as_str(symbol=False) for k,v in x.items()}
                         return [c.as_str(symbol=False) for c in x]
