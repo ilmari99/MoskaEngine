@@ -28,9 +28,7 @@ def create_dataset(nrounds : int,
     if nplayers != 4:
         raise NotImplementedError("Only 4 players supported at the moment.")
     CWD = os.getcwd()
-    model_paths = [os.environ["MOSKA_ROOT_PATH"]+"/Models/Model-nn1-BB/model.tflite",
-                      os.environ["MOSKA_ROOT_PATH"] +"/Models/ModelNN1/model.tflite"]
-    model_paths = [os.path.abspath(p) for p in model_paths]
+    model_paths = ["Model-nn1-BB","ModelNN1"]
     gamekwargs = {
         **{"log_file" : "Game-{x}.log",
         "log_level" : logging.DEBUG,
