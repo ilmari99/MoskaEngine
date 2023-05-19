@@ -8,13 +8,13 @@ requirements = [
 
 setup(
     name='MoskaEngine',
-    version='0.1.2',
+    version='0.1.3',
     description='A card game engine for the card game Moska. Contains game engine, players, simulation tools, and human interface.',
     author='Ilmari Vahteristo',
     url="https://github.com/ilmari99/MoskaEngine",
     # Used libraries are in the requirements.txt file
     packages=find_packages(),
-    package_data={"MoskaEngine": ["Models/*/*.tflite"]},
+    package_data={"MoskaEngine": ["Models/*/*.tflite"], "MoskaEngine": ["Play/PlayerConfigs/*.json"]},
     install_requires=requirements,
     # Require python 3.6 or higher, but not 3.11 or higher
     python_requires='>=3.6, <3.11',
