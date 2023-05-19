@@ -37,14 +37,14 @@ class HumanJsonPlayer(AbstractPlayer):
             self.plog.info(f"Input: {inp}")
             action, args = inp.split(";")
             self.move_args = args
-            if action not in playable:
-                print(f"Incorrect action. Action must be one of: {playable}")
-                continue
             if action == "exit":
                 self.EXIT_STATUS = 2
                 self.plog.info(f"Player chose to exit the game.")
                 print(f"Exiting game...")
                 return "exit"
+            if action not in playable:
+                print(f"Incorrect action. Action must be one of: {playable}")
+                continue
             break
         return action
     
