@@ -59,7 +59,7 @@ class Benchmark:
 
 BENCH1 = Benchmark(
     main_players=[
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/NN1-MIF.json"), number = 1),
+        PlayerWrapper.from_config("NN1-MIF", number = 1),
         PlayerWrapper(MoskaBot3,{"name" : "B3", "log_file":"Game-{x}-B3.log"}),
         PlayerWrapper(HeuristicEvaluatorBot, {"name" : f"HEV1","log_file":"Game-{x}-HEV1.log","max_num_states":1000}),
     ],
@@ -69,7 +69,7 @@ BENCH1 = Benchmark(
         "log_level" : logging.WARNING,
         "timeout" : 60,
         "gather_data":False,
-        "model_paths":[os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Models/ModelMB11-260/model.tflite")],
+        "model_paths":["ModelMB11-260"],
     },
     shared_kwargs={
         "log_level" : logging.WARNING,
@@ -78,9 +78,9 @@ BENCH1 = Benchmark(
 
 BENCH2 = Benchmark(
     main_players=[
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"]+ "/Play/PlayerConfigs/NN1-MIF.json"), number = 1),
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/NN1-MIF.json"), number = 2),
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/NN1-MIF.json"), number = 3),
+        PlayerWrapper.from_config("NN1-MIF", number = 1),
+        PlayerWrapper.from_config("NN1-MIF", number = 2),
+        PlayerWrapper.from_config("NN1-MIF", number = 3),
     ],
     folder="Benchmark2",
     game_kwargs={
@@ -88,7 +88,7 @@ BENCH2 = Benchmark(
         "log_level" : logging.WARNING,
         "timeout" : 60,
         "gather_data":False,
-        "model_paths":[os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Models/ModelMB11-260/model.tflite")],
+        "model_paths":["ModelMB11-260"],
     },
     shared_kwargs={
         "log_level" : logging.WARNING,
@@ -97,9 +97,9 @@ BENCH2 = Benchmark(
 
 BENCH3 = Benchmark(
     main_players=[
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/Bot3.json"), number = 1),
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/Bot3.json"), number = 2),
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/Bot3.json"), number = 3),
+        PlayerWrapper.from_config("Bot3", number = 1),
+        PlayerWrapper.from_config("Bot3", number = 2),
+        PlayerWrapper.from_config("Bot3", number = 3),
     ],
     folder="Benchmark3",
     game_kwargs={
@@ -136,9 +136,9 @@ BENCH4 = Benchmark(
 
 BENCH5 = Benchmark(
     main_players=[
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/NN2-HIF.json"), number = 1),
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/NN2-HIF.json"), number = 2),
-        PlayerWrapper.from_config(os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/NN2-HIF.json"), number = 3),
+        PlayerWrapper.from_config("NN2-HIF", number = 1),
+        PlayerWrapper.from_config("NN2-HIF", number = 2),
+        PlayerWrapper.from_config("NN2-HIF", number = 3),
     ],
     folder="Benchmark5",
     game_kwargs={
@@ -146,7 +146,7 @@ BENCH5 = Benchmark(
         "log_level" : logging.WARNING,
         "timeout" : 60,
         "gather_data":False,
-        "model_paths":[os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite")],
+        "model_paths":["Model-nn1-BB"],
     },
     shared_kwargs={
         "log_level" : logging.WARNING,
@@ -173,7 +173,7 @@ def run_benchmark(player_type : AbstractPlayer,
 
 def standard_benchmark(player_type, pl_args, game_kwargs, cpus=10,chunksize=3):
     game_kwargs = { **{
-        "model_paths" : [os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite")],
+        "model_paths" : ["Model-nn1-BB"],
         "gather_data" : False,
         "log_level" : logging.WARNING
     },**game_kwargs
