@@ -6,6 +6,6 @@
         "max_num_states":1000,
         "max_num_samples":100,
         "pred_format":"old-algbr",
-        "model_id":"./Models/ModelMB11-260/model.tflite"
+        "model_id":"ModelMB11-260"
     }
 }

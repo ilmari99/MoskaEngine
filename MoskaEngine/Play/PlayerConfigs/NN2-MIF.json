@@ -5,6 +5,6 @@
         "log_file":"Game-{x}-NN2-MIF.log", 
         "max_num_states":1000,
         "pred_format":"bitmap",
-        "model_id":"./Models/Model-nn1-BB/model.tflite"
+        "model_id":"Model-nn1-BB"
     }
 }

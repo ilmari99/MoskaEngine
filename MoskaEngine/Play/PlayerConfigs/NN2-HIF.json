@@ -6,6 +6,6 @@
         "max_num_states":1000,
         "max_num_samples":100,
         "pred_format":"bitmap",
-        "model_id":"./Models/Model-nn1-BB/model.tflite"
+        "model_id":"Model-nn1-BB"
     }
 }
