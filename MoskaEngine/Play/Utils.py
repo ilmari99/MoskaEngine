@@ -38,6 +38,36 @@ CLASS_MAP = {
     "HeuristicEvaluatorBot": HeuristicEvaluatorBot
 }
 
+def get_config_file(config : str) -> str:
+    """ Check if the config file exists """
+    # First search from given path. If not found search MOSKA_ROOT_PATH
+    if not os.path.isfile(config):
+        config = f"/Play/PlayerConfigs/{config}.json"
+        config = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + config)
+    if not os.path.isfile(config):
+        return ""
+    return config
+
+def raise_config_not_found_error(config : str) -> None:
+    """ Raise a config error """
+    avail_configs_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/")
+    avail_configs_in_pkg = [f.split(".")[0] for f in avail_configs_in_pkg if f.endswith(".json")]
+    raise FileNotFoundError(f"Config file {config} not found. Use a custom file, or one of: {avail_configs_in_pkg}")
+
+def get_model_file(model : str) -> str:
+    """ Check if the model file exists """
+    # First search from given path. If not found search MOSKA_ROOT_PATH
+    if not os.path.isfile(model):
+        model = f"/Models/{model}/model.tflite"
+        model = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + model)
+    if not os.path.isfile(model):
+        return ""
+    return model
+
+def raise_model_not_found_error(model : str) -> None:
+    avail_models_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Models/")
+    raise FileNotFoundError(f"Model file {model} not found. Use a custom .tflite model or one of: {avail_models_in_pkg}")
+
 def replace_setting_values(settings : Dict[str,Any], game_id : int = 0) -> Dict[str,Any]:
     """ Create a new settings dict, with the game id replaced.
     """
@@ -47,18 +77,39 @@ def replace_setting_values(settings : Dict[str,Any], game_id : int = 0) -> Dict[
     for key,val in instance_settings.items():
         if isinstance(val, str):
             instance_settings[key] = instance_settings[key].replace("{x}", str(game_id))
+        # If we are replacing values for model paths, we need to replace the values, and check they exist
         elif key == "model_paths":
             if isinstance(val, list):
-                instance_settings[key] = [os.path.abspath(p) for p in val]
-            elif isinstance(val, str):
-                instance_settings[key] = os.path.abspath(val)
-        elif key == "model_id" and val != "all":
-            if isinstance(val, list):
+                models = []
+                # Loop through the list of model identifiers, and either raise an error or add the model to path
                 for i in range(len(val)):
-                    if isinstance(val[i], str):
-                        instance_settings[key][i] = os.path.abspath(val[i])
+                    model = get_model_file(val[i])
+                    if not model:
+                        raise_model_not_found_error(val[i])
+                    models.append(model)
+                instance_settings[key] = models
             elif isinstance(val, str):
-                instance_settings[key] = os.path.abspath(val)
+                model = get_model_file(val)
+                if not model:
+                    raise_model_not_found_error(val)
+                instance_settings[key] = model
+        # If we are replacing the path for a players model_id, we need to replace the values, and check they exist
+        elif key == "model_id" and val != "all":
+            # If the model_id is a list, i.e. multiple models
+            if isinstance(val, list):
+                models = []
+                # Change all of the models
+                for i in range(len(val)):
+                    model_path = get_model_file(val[i])
+                    if not model_path:
+                        raise_model_not_found_error(val[i])
+                    models.append(model_path)
+                instance_settings[key] = models
+            elif isinstance(val, str):
+                model_path = get_model_file(val)
+                if not model_path:
+                    raise_model_not_found_error(val)
+                instance_settings[key] = model_path
     return instance_settings
 
 
@@ -134,8 +185,7 @@ def get_random_players(nplayers : int, shared_kwargs : Dict = {}, use_HIF : bool
         "log_level" : logging.WARNING,
     }
     shared_kwargs = {**shared_kwargs_default, **shared_kwargs}
-    model_paths = ["/ModelNN1/model.tflite","/Model-nn1-BB/model.tflite"]
-    nn_models = [os.path.abspath(os.environ["MOSKA_ROOT_PATH"]+"/Models"+p) for p in model_paths]
+    nn_models = ["ModelNN1","Model-nn1-BB"]
     # Convert paths to operating system style
     nn_models = [(path, fmt) for path,fmt in zip(nn_models,["new-algbr","bitmap"])]
 

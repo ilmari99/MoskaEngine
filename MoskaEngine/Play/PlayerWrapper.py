@@ -2,7 +2,7 @@ import os
 import sys
 from ..Player.AbstractPlayer import AbstractPlayer
 from typing import Any, Callable, Dict, Iterable, List, Tuple
-from .Utils import replace_setting_values, CLASS_MAP
+from .Utils import replace_setting_values, CLASS_MAP, get_config_file, get_model_file, raise_config_not_found_error, raise_model_not_found_error
 import json
 """
 This file contains the PlayerWrapper class, which is used to wrap a player class and settings into a single object.
@@ -31,6 +31,9 @@ class PlayerWrapper:
                 settings["log_file"] = settings["log_file"].split(".")[0] + f"_{number}.log"
             else:
                 Warning("No log file (or infer) specified, but number is specified.")
+        if "model_id" in settings and not settings["model_id"].isnumeric():
+            # First search from given path. If not found search MOSKA_ROOT_PATH
+            settings["model_id"] = self._convert_model_path(settings["model_id"])
         self.player_class = player_class
         self.settings = settings.copy()
         return
@@ -42,28 +45,29 @@ class PlayerWrapper:
         Since this is used in parallel, from a different process, the config file must be specified as a string.
         Later calls in the same main process just return the same object as in the first call.
         """
-
-        if not os.path.isfile(config):
-            config = "." + config
-        if not os.path.isfile(config):
-            raise FileNotFoundError(f"Config file {config} not found.")
+        og_config = config
+        config = get_config_file(config)
+        if not config:
+            raise_config_not_found_error(og_config)
         with open(config, 'r') as f:
             config = json.load(f)
         player_class = config["player_class"]
         settings = config["settings"]
-        # Convert to absolute path if needed
-        # This is very hacky, but again the processes are spawned in a weird way in the multiprocessing module.
         if "model_id" in settings and not settings["model_id"].isnumeric():
             # First search from given path. If not found search MOSKA_ROOT_PATH
-            given_path = settings["model_id"]
-            if not os.path.isfile(settings["model_id"]):
-                settings["model_id"] = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + given_path.strip("."))
-            if not os.path.isfile(settings["model_id"]):
-                raise FileNotFoundError(f"Model file {given_path} OR {settings['model_id']} not found.")
-            settings["model_id"] = os.path.abspath(settings["model_id"])
+            settings["model_id"] = cls._convert_model_path(settings["model_id"])
         settings.update(kwarg_overwrite)
         player_class = CLASS_MAP[player_class]
         return cls(player_class, settings, number = number)
+    
+    @classmethod
+    def _convert_model_path(self,path):
+        if isinstance(path, list):
+            return [self._convert_model_path(p) for p in path]
+        model_path = get_model_file(path)
+        if not model_path:
+            raise_model_not_found_error(path)
+        return model_path
 
     def _get_instance_settings(self, game_id : int) -> None:
         """ Create a new settings dict, with the game id replaced.
