@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 from typing import Any, Callable, Iterable, List, TYPE_CHECKING, Sequence
 if TYPE_CHECKING:
     from .Deck import Card
@@ -68,6 +69,35 @@ def check_can_fall_card(played_card : Card, fall_card : Card,trump : str) -> boo
             success = True
     return success
 
+def get_config_file(config : str) -> str:
+    """ Check if the config file exists """
+    # First search from given path. If not found search MOSKA_ROOT_PATH
+    if not os.path.isfile(config):
+        config = f"/Play/PlayerConfigs/{config}.json"
+        config = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + config)
+    if not os.path.isfile(config):
+        return ""
+    return config
+
+def raise_config_not_found_error(config : str) -> None:
+    """ Raise a config error """
+    avail_configs_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/")
+    avail_configs_in_pkg = [f.split(".")[0] for f in avail_configs_in_pkg if f.endswith(".json")]
+    raise FileNotFoundError(f"Config file {config} not found. Use a custom file, or one of: {avail_configs_in_pkg}")
+
+def get_model_file(model : str) -> str:
+    """ Check if the model file exists """
+    # First search from given path. If not found search MOSKA_ROOT_PATH
+    if not os.path.isfile(model):
+        model = f"/Models/{model}/model.tflite"
+        model = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + model)
+    if not os.path.isfile(model):
+        return ""
+    return model
+
+def raise_model_not_found_error(model : str) -> None:
+    avail_models_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Models/")
+    raise FileNotFoundError(f"Model file {model} not found. Use a custom .tflite model or one of: {avail_models_in_pkg}")
 
 class TurnCycle:
     """An implementation of a list-like structure, that loops over the list, if an index > len() is given.
