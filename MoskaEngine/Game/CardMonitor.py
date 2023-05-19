@@ -7,8 +7,6 @@ from .Deck import Card, StandardDeck
 from .utils import check_can_fall_card
 if TYPE_CHECKING:
     from .Game import MoskaGame
-    
-
 
 class CardMonitor:
     """
