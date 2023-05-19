@@ -14,7 +14,7 @@ from .PlayerWrapper import PlayerWrapper
 from argparse import ArgumentParser
 import sys
 
-def get_human_players(model_path : str = "model.tflite",
+def get_human_players(model_path : str = "Model-nn1-BB",
                       pred_format : str = "bitmap",
                       human_name = "Human",
                       ) -> List[PlayerWrapper]:
@@ -28,64 +28,37 @@ def get_human_players(model_path : str = "model.tflite",
         List[PlayerWrapper]: A list of PlayerWrappers.
     """
     shared_kwargs = {"log_level" : logging.DEBUG,
-                     "delay":0.1,
-                     "requires_graphic":True}
+                     "delay":0.02,
+                     "requires_graphic":True
+                     }
+    opp_shared_kwargs = {"max_num_states":8000,"max_num_samples":1000,"model_id" : model_path, "pred_format" : pred_format}
+
     players : List[PlayerWrapper] = []
     players.append(PlayerWrapper(HumanJsonPlayer, {**shared_kwargs, **{"name":human_name,"log_file":"Game-{x}-" +f"{human_name}" + ".log"}}))
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : "NN2-HIF1",
-                                            "log_file":"Game-{x}-NNEV1.log", 
-                                            "max_num_states":8000,
-                                            "max_num_samples":1000,
-                                            "pred_format":pred_format,
-                                            "model_id":os.path.abspath(model_path),
-                                            }}))
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : "NN2-HIF2",
-                                            "log_file":"Game-{x}-NNEV2.log", 
-                                            "max_num_states":8000,
-                                            "max_num_samples":1000,
-                                            "pred_format":pred_format,
-                                            "model_id":os.path.abspath(model_path),
-                                            }}))
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : "NN2-HIF3",
-                                            "log_file":"Game-{x}-NNEV3.log", 
-                                            "max_num_states":8000,
-                                            "max_num_samples":1000,
-                                            "pred_format":pred_format,
-                                            "model_id":os.path.abspath(model_path),
-                                            }}))
+    players.append(PlayerWrapper.from_config("NN2-HIF",1,**{**opp_shared_kwargs,**shared_kwargs}))
+    players.append(PlayerWrapper.from_config("NN2-HIF",2,**{**opp_shared_kwargs,**shared_kwargs}))
+    players.append(PlayerWrapper.from_config("NN2-HIF",3,**{**opp_shared_kwargs,**shared_kwargs}))
     return players
 
-def get_test_human_players(model_path : str = "./model.tflite",
+def get_test_players(model_path : str = "./model.tflite",
                            pred_format : str = "bitmap",
-                           all_against_human : bool = False) -> List[PlayerWrapper]:
+                           ) -> List[PlayerWrapper]:
     """Returns a list of four identical PlayerWrapper(NNHIFEvaluatorBot)s, using the model found in model_path, with pred_format.
     This is used for testing purposes.
     """
     shared_kwargs = {"log_level" : logging.INFO,
-                     "delay":0.1,
+                     "delay":0.02,
                      "requires_graphic":True,
                      "max_num_states":8000,
                      "max_num_samples":1000,
-                     "model_id":os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite",
+                     "model_id":model_path,
                      "pred_format":pred_format,
                      }
     players = []
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs, **{"name" : "Fake-human",
-                                            "log_file":"Game-{x}-NNEV-test.log", 
-                                            }}))
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : "NNEV1",
-                                            "log_file":"Game-{x}-NNEV1.log", 
-                                            }}))
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : "NNEV2",
-                                            "log_file":"Game-{x}-NNEV2.log", 
-                                            }}))
-    players.append(PlayerWrapper(NNHIFEvaluatorBot, {**shared_kwargs,**{"name" : "NNEV3",
-                                            "log_file":"Game-{x}-NNEV3.log", 
-                                            }}))
-    if all_against_human:
-        for pl in players:
-            if pl.settings["name"] != "Fake-human":
-                pl.settings["min_player"] = "Fake-human"
+    players.append(PlayerWrapper.from_config("NN2-HIF",1,**shared_kwargs))
+    players.append(PlayerWrapper.from_config("NN2-HIF",2,**shared_kwargs))
+    players.append(PlayerWrapper.from_config("NN2-HIF",3,**shared_kwargs))
+    players.append(PlayerWrapper.from_config("NN2-HIF",4,**shared_kwargs))
     return players
 
 def get_next_game_id(path : str, filename : str) -> int:
@@ -106,7 +79,7 @@ def get_next_game_id(path : str, filename : str) -> int:
     return i
 
 
-def play_as_human(model_path = "./Models/Model-nn1-fuller/model.tflite",
+def play_as_human(model_path = "Model-nn1-BB",
                   pred_format="bitmap",
                   test=False,
                   human_name="Human",
@@ -117,7 +90,7 @@ def play_as_human(model_path = "./Models/Model-nn1-fuller/model.tflite",
     print(f"Starting game number {game_id} of player {human_name}")
     # Get a list of players
     if test:
-        players = get_test_human_players(model_path = model_path, pred_format=pred_format)
+        players = get_test_players(model_path = model_path, pred_format=pred_format)
     else:
         players = get_human_players(model_path = model_path, pred_format=pred_format, human_name=human_name)
     #players = get_test_human_players(model_path = "./Models/Model-nn1-fuller/model.tflite", pred_format="bitmap")
@@ -130,7 +103,7 @@ def play_as_human(model_path = "./Models/Model-nn1-fuller/model.tflite",
         "players" : players,
         "log_level" : logging.DEBUG,
         "timeout" : 2000,
-        "model_paths":[os.path.abspath(path) for path in [model_path]],
+        "model_paths":model_path,
         "player_evals" : "save",
         "print_format" : "basic_with_card_symbols",
         # XOR of these should be true; either but not both
@@ -165,7 +138,7 @@ def parse_args(inp : List[str],skip_first = True):
 # This can be imported and run as a function with a string of arguments
 def run_as_command_line_program(args):
     args = parse_args(args)
-    out = play_as_human(model_path = os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite",
+    out = play_as_human(model_path = "Model-nn1-BB",
                         human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
         sys.exit(0)
@@ -175,7 +148,7 @@ def run_as_command_line_program(args):
 # This can be run as a command line program
 if __name__ == "__main__":
     args = parse_args(sys.argv)
-    out = play_as_human(model_path = os.environ["MOSKA_ROOT_PATH"] + "/Models/Model-nn1-BB/model.tflite",
+    out = play_as_human(model_path = "Model-nn1-BB",
                         human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
         sys.exit(0)
