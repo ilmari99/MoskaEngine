@@ -43,7 +43,7 @@ class MoskaBot3(AbstractPlayer):
     
     def _play_move(self) -> Tuple[bool, str]:
         self.scoring.assign_scores_inplace()
-        self.scoring._assign_scores(self.moskaGame.card_monitor.cards_fall_dict.keys())
+        self.scoring._assign_scores(self.moskaGame.card_monitor.cards_kill_dict.keys())
         return super()._play_move()
         
     def choose_move(self, playable: List[str]) -> str:
@@ -176,7 +176,7 @@ class MoskaBot3(AbstractPlayer):
         pv = self._playable_values_from_hand()
         
         # Get a mapping from each card in hand, to all cards in hand that can be fallen with the card and can be played to the table
-        c_playable = self.hand.copy().pop_cards(lambda x : x.value in pv)
+        c_playable = self.hand.copy().pop_cards(lambda x : x.rank in pv)
         can_fall = self._map_each_to_list(from_ = self.hand.cards, to=c_playable)
         cards = []
         for card, falls in can_fall.items():
@@ -198,10 +198,10 @@ class MoskaBot3(AbstractPlayer):
             List[Card]: _description_
         """
         same_values = {}
-        for val in set([c.value for c in self.hand.cards]):
+        for val in set([c.rank for c in self.hand.cards]):
             # A dictionary of value : List[Card], where the cards are sorted in ascending order according to score
             # For example same_values[3] : [S3,A3], where S3.score = 4, S3.score = 6
-            same_values[val] = list(sorted(filter(lambda x : x.value == val, self.hand.cards),key=lambda x : x.score))
+            same_values[val] = list(sorted(filter(lambda x : x.rank == val, self.hand.cards),key=lambda x : x.score))
         fits = self._fits_to_table()
         play_cards = []
         new_play_cards = []
@@ -290,5 +290,5 @@ class MoskaBot3(AbstractPlayer):
         play_cards = []
         if playable_values:
             chand = self.hand.copy()
-            play_cards = chand.pop_cards(cond=lambda x : x.value in playable_values and (x.score < 10 or len(self.moskaGame.deck) <= 0), max_cards = self._fits_to_table())
+            play_cards = chand.pop_cards(cond=lambda x : x.rank in playable_values and (x.score < 10 or len(self.moskaGame.deck) <= 0), max_cards = self._fits_to_table())
         return play_cards
