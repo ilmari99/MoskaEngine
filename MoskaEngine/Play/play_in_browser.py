@@ -136,7 +136,7 @@ def parse_args(inp : List[str],skip_first = True):
 
 # This can be imported and run as a function with a string of arguments
 def run_as_command_line_program(args):
-    args = parse_args(args)
+    args = parse_args(args,skip_first=True)
     out = play_as_human(model_path = "Model-nn1-BB",
                         human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
