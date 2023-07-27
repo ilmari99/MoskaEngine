@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from .AbstractEvaluatorBot import AbstractEvaluatorBot
 from typing import Dict, List,TYPE_CHECKING, Tuple
-from Game.GameState import FullGameState
+from ..Game.GameState import FullGameState
 if TYPE_CHECKING:
     from ..Game.Deck import Card
     from ..Game.Game import MoskaGame
