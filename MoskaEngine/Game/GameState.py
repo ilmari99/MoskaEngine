@@ -95,7 +95,7 @@ class FullGameState:
         game.deck = self.deck
         game.fell_cards = self.fell_cards
         game.cards_to_fall = self.cards_to_fall
-        game.card_monitor.cards_fall_dict = self.cards_fall_dict
+        game.card_monitor.cards_kill_dict = self.cards_fall_dict
         game.card_monitor.player_cards = {pl.name:cards for pl,cards in zip(game.players,self.known_player_cards)}
         game.turnCycle.ptr = self.tc_index
         
@@ -125,7 +125,7 @@ class FullGameState:
                    full_player_cards,
                    game.fell_cards,
                    game.cards_to_fall,
-                   game.card_monitor.cards_fall_dict,
+                   game.card_monitor.cards_kill_dict,
                    players_ready,
                    players_in_game,
                    game.turnCycle.ptr,
@@ -187,9 +187,9 @@ class FullGameState:
             out = False
             msg = "The cards to fall are not equal. {} != {}".format(self.cards_to_fall,other.cards_to_fall)
         # Check if the cards in game are the same
-        elif self.cards_fall_dict != other.card_monitor.cards_fall_dict:
+        elif self.cards_fall_dict != other.card_monitor.cards_kill_dict:
             out = False
-            msg = "The cards fall dict are not equal. {} != {}".format(self.cards_fall_dict,other.card_monitor.cards_fall_dict)
+            msg = "The cards fall dict are not equal. {} != {}".format(self.cards_fall_dict,other.card_monitor.cards_kill_dict)
         # Check if the players ready are the same
         elif self.players_ready != [pl.ready for pl in other.players]:
             out = False
