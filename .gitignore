@@ -1,5 +1,10 @@
 # Custom ignores
 .moskavenv
+.VSCodeCounter
+Benchmark*
+sandbox.py
+Human-Games
+test_dataset
 
 
 # Byte-compiled / optimized / DLL files
