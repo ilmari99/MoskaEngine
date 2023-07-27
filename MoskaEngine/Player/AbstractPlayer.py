@@ -20,11 +20,6 @@ from abc import ABC, abstractmethod
 
 
 class AbstractPlayer(ABC):
-    """ Abstract class for a player in Moska.
-    This class implements the required methods and some utility methods.
-    When subclassing, the abstract methods must be implemented to decide actions.
-    
-    """
     def __init__(self,
                  moskaGame : MoskaGame = None, 
                  name : str = "", 
@@ -34,28 +29,50 @@ class AbstractPlayer(ABC):
                  log_file = "",
                  min_turns : int = 1,
                  ):
-            # -1 = Not-running, 0 = Running, 1 = Clean exit, 2 = Error
-        self.EXIT_STATUS : int = -1
-        self.hand : MoskaHand = None
-        self.pid : int = None
-        self.moskaGame : MoskaGame = None
-        self.rank : int = None
-        self.thread : threading.Thread = None
-        self.name : str = ""
-        self.ready : bool = False
-        self.delay : float = 0
-        self.requires_graphic : bool = False
-        self.plog : logging.Logger = None
-        self.log_level = logging.INFO
-        self.log_file : str = ""
-        self.thread_id : int = None
-        self.moves : Dict[str,Callable] = {}
-        self.state_vectors = []
-        self.min_turns = min_turns
-        self.state_vectors = []
+        """ An abstract player, which contains the core functionality of an agent.
+            Communication between game-player, enforcement of rules, logging, etc. etc. is handled automatically by the Game instance and this class.
 
-        self.moskaGame = moskaGame
-        self.log_level = log_level
+            Subclasses must implement the abstract methods to create playing logic for the agent.
+            
+            The MoskaGame instance, between which communication happens, can either be given when initializing a player, OR later by calling set_moskaGame()
+
+            Args:
+            - moskaGame (MoskaGame) : The MoskaGame instance between which to communicate. Can be specified later by calling set_moskaGame()
+            - name (str) : The name of the player. This is used in logging and display of information. The names of all players in a MoskaGame must be unique.
+            - delay (float) : How long, in seconds, should this player wait in-between their turns.
+            - requires_graphic (bool) : Deprecated!! Remove.
+            - log_level (int) : How much logging to do. Default is INFO.
+            - log_file (str) : The file name where to write this players log entries.
+                               NOTE: If a directory change is done for the game, the log file will be in the directory where the game was played.
+            - min_turns (int) : A remnant from testing. Specifies how many times to play, before marking self as ready. Defaults to 1.
+        """
+        self.EXIT_STATUS : int = -1             # -1 = Not-running, 0 = Running, 1 = Clean exit, 2 = Error
+        self.hand : MoskaHand = None            # MoskaHand instance associated with this player.
+        self.pid : int = None                   # The player-id, which is the index of this player in the cycle. The player with pid==0, is the first target
+        self.moskaGame : MoskaGame = None       # The MoskaGame class, which contains info about the Game instance
+        self.rank : int = None                  # The finishing rank of the player. None means not finished, and any other means the players finishing rank (1st, 2nd ..)
+        self.thread : threading.Thread = None   # The thread instance of this player. Each player is started as a thread. It is not actually necessary to use threads
+                                                # and the code would be cleaner. This is also a remnant of the past, where a goal was to actually have players calculate
+                                                # moves in parallel, since Moska in not sequential. This is however hard to implement in logic, actually impossible with GIL, and not even a good idea.
+        self.name : str = ""                    # A unique name (unique for the game instance) for the player
+        self.ready : bool = False               # Whether this player is ready, as in they do not want to play anything unless the game position develops (Any move other than Skip)
+        self.delay : float = 0                  # How much to wait in between turns.
+        self.requires_graphic : bool = False    # Deprecated. How to display graphics.
+        self.plog : logging.Logger = None       # The players own logger
+        self.log_level = logging.INFO           # log_level. Only the initial level, if the level is changed in the 'plog' instance, this is not updated.
+        self.log_file : str = ""                # The file name to use for logging.
+        self.thread_id : int = None             # The native id of the thread
+        self.moves : Dict[str,Callable] = {}    # A dictionary of str -> func, where the string is a moves identifier, and the func is a wrapper over all of the abstract methods
+        self.state_vectors = []                 # A list containing 'vectors' (as lists), which contain all positions the player has been AFTER playing their move.
+        self.min_turns = min_turns              # Number of turns to play until marking self as ready
+        self.moskaGame = moskaGame              # The moskaGame, where this player plays
+        self.log_level = log_level              # What level log messages to log
+
+        # This class is not directly instanceable, but if a custom subclass fails to specify a name, raise an error
+        if not name:
+            raise NameError(f"Name must be specified when creating an AbstractPlayer.")
+        if requires_graphic:
+            DeprecationWarning(f"requires_graphic was specified as True (default False), but requires_graphic is deprecated and does not affect the behavior of the program.")
         self.name = name
         self.log_file = log_file if log_file else os.devnull
         self.delay = delay
@@ -72,11 +89,15 @@ class AbstractPlayer(ABC):
     
     def _set_plogger(self) -> None:
         """ Sets the logger for this player.
-        Can be called explicitly or with self.log_file=....
-        NOTE: This must be called AFTER starting the process in which this player is run in.
+        Creates a logger instance with a random name (in parallel process might otherwise be a problem).
+        Sets the level.
+        Capture warnings.
+        Write logs to self.log_file
+
         Currently this is called in the `_start` method, which is called from Game when the game begins.
         """
-        plog = logging.getLogger(self.name + str(random.randint(0,1000000)))    # TODO: This is why the logs might sometimes display multiple games in one file
+        # If no randomness is specified, then in parallel simulations multiple players might write to the same log file
+        plog = logging.getLogger(self.name + str(random.randint(0,1000000)))
         plog.setLevel(self.log_level)
         logging.captureWarnings(True)
         fh = logging.FileHandler(self.log_file,mode="w",encoding="utf-8")
@@ -84,16 +105,18 @@ class AbstractPlayer(ABC):
         fh.setFormatter(formatter)
         plog.addHandler(fh)
         self.plog = plog
-        #assert self.plog.hasHandlers(), "Logger has no handles"
-        #assert not self.plog.disabled, "Logger is disabled"
         self.plog.info(f"Created Player {self.name} with pid {self.pid} and log file {self.log_file}")
         self.plog.info(f"Player type: {type(self)}")
         return
         
-    def _set_moskaGame(self) -> None:
-        """Sets the moskaGame instance and deals cards from the deck associated with the moskagame
+    def set_moskaGame(self, moskaGame, _from_settr = False) -> None:
+        """ Set the moskaGame attribute of this player.
+        This saves a reference to the moskaGame -instance, and the player also draws their initial cards from the deck.
         """
-        self.hand = MoskaHand(self.moskaGame)
+        if not _from_settr:
+            self.moskaGame = moskaGame
+            return
+        self.hand = MoskaHand(moskaGame)
         return
     
     def __setattr__(self, name : str, value : Any) -> None:
@@ -106,7 +129,7 @@ class AbstractPlayer(ABC):
         super.__setattr__(self, name, value)
         # If moskaGame is not set in the constructor, it must be set later
         if name == "moskaGame" and value is not None:
-            self._set_moskaGame()
+            self.set_moskaGame(value, _from_settr = True)
     
     def _set_pid_name_logfile(self,pid) -> None:
         """ Set the players pid. The pid is used to identify the player in the game.
@@ -119,14 +142,14 @@ class AbstractPlayer(ABC):
     
     def _playable_values_to_table(self) -> Set[int]:
         """Return a set of integer values that can be played to the table.
-        This equals the set of values, that have been played to the table.
+        This equals the set of card rankss, that have been played to the table.
 
         This is used as a utility method, and to decide which moves are possible.
 
         Returns:
             set[int]: Which values have been played to the table
         """
-        return set([c.value for c in self.moskaGame.cards_to_fall + self.moskaGame.fell_cards])
+        return set([c.rank for c in self.moskaGame.cards_to_fall + self.moskaGame.fell_cards])
     
     def _playable_values_from_hand(self) -> Set[int]:
         """Return a set of values, that can be played to target.
@@ -137,7 +160,7 @@ class AbstractPlayer(ABC):
         Returns:
             set: intersection of played values and values in the hand
         """
-        return self._playable_values_to_table().intersection([c.value for c in self.hand.cards])
+        return self._playable_values_to_table().intersection([c.rank for c in self.hand.cards])
     
     def _fits_to_table(self) -> int:
         """Return the number of cards playable to the active/target player.
@@ -217,7 +240,7 @@ class AbstractPlayer(ABC):
         # Loop through the hand, and table and see if there is a card that can be used to kill a card on the table.
         for pc in self.hand:
             for fc in self.moskaGame.cards_to_fall:
-                 if utils.check_can_fall_card(pc,fc,self.moskaGame.trump):
+                 if utils.check_can_kill_card(pc,fc,self.moskaGame.trump):
                      return True
         return False
 
@@ -477,6 +500,9 @@ class AbstractPlayer(ABC):
             self.ready = True
         elif self.EXIT_STATUS == 2:
             self.plog.info("Finished with error")
+        # Close logger handlers
+        for handler in self.plog.handlers:
+            handler.close()
         return
     
     def _check_can_fall_card(self, played_card : Card, fall_card : Card) -> bool:
@@ -493,7 +519,7 @@ class AbstractPlayer(ABC):
         Returns:
             bool: True if played_card can fall fall_card, false otherwise
         """
-        return utils.check_can_fall_card(played_card,fall_card,self.moskaGame.trump)
+        return utils.check_can_kill_card(played_card,fall_card,self.moskaGame.trump)
     
     def _map_to_list(self,card : Card) -> List[Card]:
         """ Return a list of cards, that the input card can fall from moskaGame.cards_to_fall
