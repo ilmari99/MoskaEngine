@@ -96,7 +96,7 @@ class NewRandomPlayer(AbstractPlayer):
         """Return a list of random cards to play to self.
         """
         playable_values = self._playable_values_to_table()
-        playable_cards = [c for c in self.hand.copy().cards if c.value in playable_values]
+        playable_cards = [c for c in self.hand.copy().cards if c.rank in playable_values]
         playable_cards = random.sample(playable_cards,random.randint(0,len(playable_cards)))
         return playable_cards
     
@@ -108,19 +108,19 @@ class NewRandomPlayer(AbstractPlayer):
         self.plog.debug(f"{fits} fits to table")
         #plays = itertools.chain.from_iterable((itertools.combinations(cards,i) for i in range(1,fits + 1)))
         play_iterables = []
-        counter = Counter([c.value for c in cards])
+        counter = Counter([c.rank for c in cards])
         # We can play each single card, and all cards that have at least 2 of the same value
         for i in range(1,fits + 1):
             tmp_cards = cards.copy()
             # Filter out cards that have less than 2 of the same value
             if i > 1:
-                tmp_cards = [c for c in tmp_cards if counter[c.value] >= 2]
+                tmp_cards = [c for c in tmp_cards if counter[c.rank] >= 2]
             # Add the i length combinations to the play_iterables
             play_iterables.append(itertools.combinations(tmp_cards,i))
         plays = itertools.chain.from_iterable(play_iterables)
         legal_plays = []
         for play in plays:
-            c = Counter([c.value for c in play])
+            c = Counter([c.rank for c in play])
             if (len(play) == 1 or all((count >= 2 for count in c.values()))):
                 legal_plays.append(list(play))
         to_play = random.choice(legal_plays)
@@ -136,7 +136,7 @@ class NewRandomPlayer(AbstractPlayer):
                 break
             card_to_play = random.choice(hand_cards)
             cards_to_play.append(card_to_play)
-            c = Counter([c.value for c in cards_to_play])
+            c = Counter([c.rank for c in cards_to_play])
             # If the play is not valid, remove the card from the play
             if not (len(cards_to_play) == 1 or all((count >= 2 for count in c.values()))):
                 cards_to_play.remove(card_to_play)
@@ -153,6 +153,6 @@ class NewRandomPlayer(AbstractPlayer):
         Default: Play all playable values that fit.
         """
         playable_values = self._playable_values_from_hand()
-        playable_cards = [c for c in self.hand.copy().cards if c.value in playable_values]
+        playable_cards = [c for c in self.hand.copy().cards if c.rank in playable_values]
         playable_cards = random.sample(playable_cards,random.randint(0,min(len(playable_cards),self._fits_to_table())))
         return playable_cards
