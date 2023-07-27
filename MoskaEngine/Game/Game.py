@@ -453,7 +453,7 @@ class MoskaGame:
             #    self.glog.info(f"{self._basic_repr_with_cards()}")
             if self.in_console and move != "Skip":
                 print(f"{self._basic_repr_with_human_evals()}")
-            elif self.in_web:
+            elif self.in_web and move != "Skip":
                 # Print the full json in one line
                 s = self._basic_json_repr()
                 s = s.replace("\n","")
