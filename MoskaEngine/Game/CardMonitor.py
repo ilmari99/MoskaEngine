@@ -4,7 +4,7 @@ import random
 from typing import TYPE_CHECKING, List, Tuple
 from ..Player.AbstractPlayer import AbstractPlayer
 from .Deck import Card, StandardDeck
-from .utils import check_can_fall_card
+from .utils import check_can_kill_card
 if TYPE_CHECKING:
     from .Game import MoskaGame
 
@@ -21,14 +21,14 @@ class CardMonitor:
     - cards_fall_dict: A dictionary that maps cards to a list of cards. The cards in the list are the cards, that the key card can fall.
     """
     player_cards : dict[str,List[Card]]= {}
-    cards_fall_dict : dict[Card,List[Card]] = {}
+    cards_kill_dict : dict[Card,List[Card]] = {}
     game : MoskaGame = None
     started : bool = False
         
     def __init__(self,moskaGame : MoskaGame):
         self.game = moskaGame
         self.player_cards = {}
-        self.cards_fall_dict = {}
+        self.cards_kill_dict = {}
         self.started = False
         
     def start(self) -> None:
@@ -55,8 +55,8 @@ class CardMonitor:
         self.game.glog.info(f"Created card monitor. Player Cards:")
         for pl, cards in self.player_cards.items():
             self.game.glog.info(f"{pl} : {cards}")
-        self.make_cards_fall_dict()
-        assert len(self.cards_fall_dict) == 52, f"Invalid make cards fall dict"
+        self.make_cards_kill_dict()
+        assert len(self.cards_kill_dict) == 52, f"Invalid make cards fall dict"
         self.started = True
         self.game.glog.info(f"Card monitor started")
         return
@@ -79,7 +79,7 @@ class CardMonitor:
             known_cards += [card for card in cards if card != Card(-1,"X")]
         # Each player knows which cards are still in the game, and which cards are known to them
         # The hidden cards are the intersection of the cards that are still in the game and the cards that are known to the player
-        hidden_cards = [card for card in self.cards_fall_dict.keys() if card not in known_cards]
+        hidden_cards = [card for card in self.cards_kill_dict.keys() if card not in known_cards]
         return hidden_cards
     
     
@@ -94,8 +94,7 @@ class CardMonitor:
         if len(self.game.deck) == 0:
                 return []
         hidden_cards = self.get_hidden_cards(player)
-        #random.shuffle(hidden_cards)
-        # Just casually check that there are no duplicates (hash)
+        # Just casually check that there are no duplicates (set does hash)
         assert len(hidden_cards) == len(set(hidden_cards)), f"Duplicates in hidden cards"
         return hidden_cards
     
@@ -136,19 +135,19 @@ class CardMonitor:
                 break
         return samples
 
-    def make_cards_fall_dict(self):
+    def make_cards_kill_dict(self):
         """Create the cards_fall_dict by going through each card
         and checking if each card can be fell with the card
         """
         deck = StandardDeck().pop_cards(52)
         for i,card in enumerate(deck):
-            self.cards_fall_dict[card] = []
+            self.cards_kill_dict[card] = []
             for i2,card2 in enumerate(deck):
                 if i == i2:
                     continue
                 # Requires the game to be started, otherwise we have no information on the trump suit
-                if check_can_fall_card(card,card2,self.game.trump):
-                    self.cards_fall_dict[card].append(card2)
+                if check_can_kill_card(card,card2,self.game.trump):
+                    self.cards_kill_dict[card].append(card2)
         return
     
     def update_from_move(self, moveid : str, args : Tuple) -> None:
@@ -172,7 +171,7 @@ class CardMonitor:
         # If there are only 2 players left (and no deck), we know the other players cards, and can infer the other players cards reliably
         # This can also be possible for more players, but with 2 it is trivial
         pl_left = self.game.get_players_condition(lambda x: x.EXIT_STATUS == 0)
-        if len(pl_left) == 2 and len(self.game.deck) == 0 and player.EXIT_STATUS == 0 and any((c.value == -1 for c in self.player_cards[pl_left[0].name] + self.player_cards[pl_left[1].name])):
+        if len(pl_left) == 2 and len(self.game.deck) == 0 and player.EXIT_STATUS == 0 and any((c.rank == -1 for c in self.player_cards[pl_left[0].name] + self.player_cards[pl_left[1].name])):
             self.game.glog.info(f"Only two players left, updating known cards")
             # Get the cards that are hidden to the player
             # If there are only two players left, we know the other players cards
@@ -206,13 +205,13 @@ class CardMonitor:
         # Remove the removed cards from the cards_fall_dict
         for card in cards:
             # Remove the fallen card as a key
-            if card in self.cards_fall_dict:
-                self.cards_fall_dict.pop(card)
+            if card in self.cards_kill_dict:
+                self.cards_kill_dict.pop(card)
         # Remove the card as value from the list
-        for card_d, falls in self.cards_fall_dict.copy().items():
+        for card_d, falls in self.cards_kill_dict.copy().items():
             for card in cards:
                 if card in falls:
-                    self.cards_fall_dict[card_d].remove(card)
+                    self.cards_kill_dict[card_d].remove(card)
         return
         
     
