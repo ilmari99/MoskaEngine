@@ -46,58 +46,63 @@ def suit_to_symbol(suits : Iterable or str) -> List or str:
         return CARD_SUIT_SYMBOLS[suits]
     return [CARD_SUIT_SYMBOLS[s] for s in suits]
 
-def check_can_fall_card(played_card : Card, fall_card : Card,trump : str) -> bool:
-    """Returns true, if the played_card, can fall the fall_card.
-    The played card can fall fall_card, if:
-    - The played card has the same suit and is greater than fall_card
-    - If the played_card is trump suit, and the fall_card is not.
+def check_can_kill_card(kill_card : Card, killed_card : Card,trump : str) -> bool:
+    """Returns true, if the kill_card, can kill the killed_card.
+    The kill card can kill killed_card, if:
+    - The kill card has the same suit and is greater than killed_card
+    - If the kill_card is trump suit, and the killed_card is not.
 
     Args:
-        played_card (Card): The card played from hand
-        fall_card (Card): The card on the table
+        kill_card (Card): The card played from hand
+        killed_card (Card): The card on the table
         trump (str): The trump suit of the current game
 
     Returns:
-        bool: True if played_card can fall fall_card, false otherwise
+        bool: True if kill_card can kill killed_card, false otherwise
     """
     success = False
     # Jos kortit ovat samaa maata ja pelattu kortti on suurempi
-    if played_card.suit == fall_card.suit and played_card.value > fall_card.value:
+    if kill_card.suit == killed_card.suit and kill_card.rank > killed_card.rank:
         success = True
     # Jos pelattu kortti on valttia, ja kaadettava kortti ei ole valttia
-    elif played_card.suit == trump and fall_card.suit != trump:
+    elif kill_card.suit == trump and killed_card.suit != trump:
             success = True
     return success
 
-def get_config_file(config : str) -> str:
-    """ Check if the config file exists """
-    # First search from given path. If not found search MOSKA_ROOT_PATH
-    if not os.path.isfile(config):
-        config = f"/Play/PlayerConfigs/{config}.json"
-        config = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + config)
-    if not os.path.isfile(config):
+def get_config_file(config_path : str) -> str:
+    """ Returns a path to a configuration file, if such is found. Else returns empty string.
+    First checks whether a 'config_path' exists, if you want to specify a custom path to a configuration file.
+    If no path is found, checks the Play/PlayerConfigs from Moska root, and tries to find a file named config_path
+    """
+    if not os.path.isfile(config_path):
+        config_path = f"/Play/PlayerConfigs/{config_path}.json"
+        config_path = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + config_path)
+    if not os.path.isfile(config_path):
         return ""
-    return config
+    return config_path
 
-def raise_config_not_found_error(config : str) -> None:
-    """ Raise a config error """
+def raise_config_not_found_error(config_path : str) -> None:
+    """ Raise a config_path error """
     avail_configs_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/")
     avail_configs_in_pkg = [f.split(".")[0] for f in avail_configs_in_pkg if f.endswith(".json")]
-    raise FileNotFoundError(f"Config file {config} not found. Use a custom file, or one of: {avail_configs_in_pkg}")
+    raise FileNotFoundError(f"Config file {config_path} not found. Use a custom file, or one of: {avail_configs_in_pkg}")
 
-def get_model_file(model : str) -> str:
-    """ Check if the model file exists """
+def get_model_file(model_path : str) -> str:
+    """ Search for a configuration .json file.
+    First checks whether a 'config_path' exists, if you want to specify a custom path to a configuration file.
+    If no path is found, checks the Play/PlayerConfigs from Moska root.
+    """
     # First search from given path. If not found search MOSKA_ROOT_PATH
-    if not os.path.isfile(model):
-        model = f"/Models/{model}/model.tflite"
-        model = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + model)
-    if not os.path.isfile(model):
+    if not os.path.isfile(model_path):
+        model_path = f"/Models/{model_path}/model.tflite"
+        model_path = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + model_path)
+    if not os.path.isfile(model_path):
         return ""
-    return model
+    return model_path
 
-def raise_model_not_found_error(model : str) -> None:
+def raise_model_not_found_error(model_path : str) -> None:
     avail_models_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Models/")
-    raise FileNotFoundError(f"Model file {model} not found. Use a custom .tflite model or one of: {avail_models_in_pkg}")
+    raise FileNotFoundError(f"Model file {model_path} not found. Use a direct path to a .tflite model or one of: {avail_models_in_pkg}")
 
 class TurnCycle:
     """An implementation of a list-like structure, that loops over the list, if an index > len() is given.
