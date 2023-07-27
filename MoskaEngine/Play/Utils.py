@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import sys
 from typing import Any, Callable, Dict, Iterable, List, Tuple, TYPE_CHECKING
 from ..Game.Game import MoskaGame
+from ..Game.utils import get_config_file, get_model_file, raise_config_not_found_error, raise_model_not_found_error
 from ..Player.AbstractPlayer import AbstractPlayer
 from ..Player.HumanPlayer import HumanPlayer
 from ..Player.MoskaBot3 import MoskaBot3
@@ -37,36 +38,6 @@ CLASS_MAP = {
     "NNHIFEvaluatorBot": NNHIFEvaluatorBot,
     "HeuristicEvaluatorBot": HeuristicEvaluatorBot
 }
-
-def get_config_file(config : str) -> str:
-    """ Check if the config file exists """
-    # First search from given path. If not found search MOSKA_ROOT_PATH
-    if not os.path.isfile(config):
-        config = f"/Play/PlayerConfigs/{config}.json"
-        config = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + config)
-    if not os.path.isfile(config):
-        return ""
-    return config
-
-def raise_config_not_found_error(config : str) -> None:
-    """ Raise a config error """
-    avail_configs_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Play/PlayerConfigs/")
-    avail_configs_in_pkg = [f.split(".")[0] for f in avail_configs_in_pkg if f.endswith(".json")]
-    raise FileNotFoundError(f"Config file {config} not found. Use a custom file, or one of: {avail_configs_in_pkg}")
-
-def get_model_file(model : str) -> str:
-    """ Check if the model file exists """
-    # First search from given path. If not found search MOSKA_ROOT_PATH
-    if not os.path.isfile(model):
-        model = f"/Models/{model}/model.tflite"
-        model = os.path.abspath(os.environ["MOSKA_ROOT_PATH"] + model)
-    if not os.path.isfile(model):
-        return ""
-    return model
-
-def raise_model_not_found_error(model : str) -> None:
-    avail_models_in_pkg = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Models/")
-    raise FileNotFoundError(f"Model file {model} not found. Use a custom .tflite model or one of: {avail_models_in_pkg}")
 
 def replace_setting_values(settings : Dict[str,Any], game_id : int = 0) -> Dict[str,Any]:
     """ Create a new settings dict, with the game id replaced.
