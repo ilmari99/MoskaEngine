@@ -27,4 +27,5 @@ if __name__ == '__main__':
     clean_up()
     for benchmark in [BENCH1, BENCH2, BENCH3, BENCH4]:
         results.append(run_benchmark(pl_type, pl_kwargs, benchmark, game_kwargs, shared_player_kwargs, cpus=5, chunksize=1,ngames=5))
+    clean_up()
     print(results)
