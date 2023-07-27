@@ -7,13 +7,13 @@ from MoskaEngine.Game.Deck import Card, StandardDeck
 class TestCard(unittest.TestCase):
     def test_card_attributes(self):
         card = Card(5, "S", kopled=True, score=10)
-        self.assertEqual(card.value, 5)
+        self.assertEqual(card.rank, 5)
         self.assertEqual(card.suit, "S")
         self.assertTrue(card.kopled)
         self.assertEqual(card.score, 10)
         # Check that raises TypeError if setting value or suit again
         with self.assertRaises(TypeError):
-            card.value = 10
+            card.rank = 10
         with self.assertRaises(TypeError):
             card.suit = "H"
         card.kopled = False
@@ -46,7 +46,7 @@ class TestStandardDeck(unittest.TestCase):
     def test_deck_creation(self):
         deck = StandardDeck(shuffle=False)
         self.assertEqual(len(deck), 52)
-        counts = Counter(card.value for card in deck.cards)
+        counts = Counter(card.rank for card in deck.cards)
         self.assertEqual(counts, {2: 4, 3: 4, 4: 4, 5: 4, 6: 4, 7: 4, 8: 4, 9: 4, 10: 4, 11: 4, 12: 4, 13: 4, 14: 4})
         
     def test_deck_shuffle(self):
@@ -62,12 +62,12 @@ class TestStandardDeck(unittest.TestCase):
         cards = deck.pop_cards(5)
         self.assertEqual(len(deck), 47)
         self.assertEqual(len(cards), 5)
-        self.assertEqual(Counter(card.value for card in cards), {2: 4, 3:1})
+        self.assertEqual(Counter(card.rank for card in cards), {2: 4, 3:1})
         # pop three threes, 4 fours and 3 fives
         cards = deck.pop_cards(10)
         self.assertEqual(len(deck), 37)
         self.assertEqual(len(cards), 10)
-        self.assertEqual(Counter(card.value for card in cards), {3 : 3, 4: 4, 5: 3})
+        self.assertEqual(Counter(card.rank for card in cards), {3 : 3, 4: 4, 5: 3})
         
 if __name__ == "__main__":
     unittest.main()
