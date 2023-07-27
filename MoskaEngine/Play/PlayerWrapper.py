@@ -31,9 +31,15 @@ class PlayerWrapper:
                 settings["log_file"] = settings["log_file"].split(".")[0] + f"_{number}.log"
             else:
                 Warning("No log file (or infer) specified, but number is specified.")
-        if "model_id" in settings and not settings["model_id"].isnumeric():
+        # If the model_id is given as a number (index of the model in Game.model_paths)
+        if "model_id" in settings and isinstance(settings["model_id"], int):
+            settings["model_id"] = settings["model_id"]
+        # Check if the input is something other than "all", and if it is, convert it to a path
+        elif "model_id" in settings and settings["model_id"] != "all":
             # First search from given path. If not found search MOSKA_ROOT_PATH
             settings["model_id"] = self._convert_model_path(settings["model_id"])
+        elif "model_id" in settings and settings["model_id"] == "all":
+            settings["model_id"] = "all"
         self.player_class = player_class
         self.settings = settings.copy()
         return
