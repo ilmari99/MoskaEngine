@@ -155,7 +155,7 @@ class AbstractEvaluatorBot(AbstractPlayer):
         """
         playable_from_hand = self._playable_values_from_hand()
         chand = self.hand.copy()
-        playable_cards = chand.pop_cards(cond=lambda c : c.value in playable_from_hand)
+        playable_cards = chand.pop_cards(cond=lambda c : c.rank in playable_from_hand)
         plays = []
         for i in range(1,len(playable_cards)+1):
             plays += list(itertools.combinations(playable_cards,i,))
@@ -228,7 +228,7 @@ class AbstractEvaluatorBot(AbstractPlayer):
         """
         playable_from_hand = self._playable_values_from_hand()
         chand = self.hand.copy()
-        playable_cards = chand.pop_cards(cond=lambda c : c.value in playable_from_hand)
+        playable_cards = chand.pop_cards(cond=lambda c : c.rank in playable_from_hand)
         play_iterables = []
         for i in range(1,min(len(playable_cards)+1,self._fits_to_table()+1)):
             play_iterables.append(itertools.combinations(playable_cards,i))
@@ -252,20 +252,20 @@ class AbstractEvaluatorBot(AbstractPlayer):
     
     def _get_initial_plays(self, cards : List[Card], fits : int):
         single_solutions = itertools.combinations(cards,1)
-        og_counter = Counter([c.value for c in cards])
-        cards = [c for c in cards if og_counter[c.value] >= 2]
+        og_counter = Counter([c.rank for c in cards])
+        cards = [c for c in cards if og_counter[c.rank] >= 2]
         #card_sets = []
         #for val, count in og_counter.items():
         #    if count >= 2:
         #        card_sets.append([c for c in cards if c.value == val])
-        card_sets = [[c for c in cards if c.value == val] for val, count in og_counter.items() if count >= 2]
+        card_sets = [[c for c in cards if c.rank == val] for val, count in og_counter.items() if count >= 2]
 
         legal_plays = list(single_solutions)
         # Take all combinations of atleast two cards from each set
         # Store in a dictionary, where the first key is the cards value, and the second key is the length of the play
         cards_set_combinations = {}
         for i in range(1,len(card_sets) + 1):
-            value = card_sets[i - 1][0].value
+            value = card_sets[i - 1][0].rank
             cards_set_combinations[value] = {}
             for len_play in range(2, min(fits, len(card_sets[i - 1]))+1):
                 plays = list(itertools.combinations(card_sets[i - 1],len_play))
@@ -288,7 +288,7 @@ class AbstractEvaluatorBot(AbstractPlayer):
             if len(play) >= fits:
                 return [play]
             if not visited:
-                visited = set((c.value for c in play))
+                visited = set((c.rank for c in play))
             combined_plays = [play]
             for val, plays in cards_set_combinations.items():
                 if val not in visited:
