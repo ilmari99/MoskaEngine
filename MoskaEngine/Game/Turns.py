@@ -87,7 +87,7 @@ class InitialPlay(_PlayToPlayer):
         self.play()
         
     def check_single_or_multiple(self):
-        c = Counter([c.value for c in self.cards])
+        c = Counter([c.rank for c in self.cards])
         return len(self.cards) == 1 or all((count >= 2 for count in c.values()))
         
         
@@ -119,12 +119,12 @@ class PlayToOther(_PlayToPlayer):
     
     def _playable_values(self):
         """ Return a set of values, that can be played to target"""
-        return set([c.value for c in self.moskaGame.cards_to_fall + self.moskaGame.fell_cards])
+        return set([c.rank for c in self.moskaGame.cards_to_fall + self.moskaGame.fell_cards])
     
     def check_in_table(self):
         """ Check that the cards have already been played by either the player or an opponent"""
         playable_values = self._playable_values()
-        return all((card.value in playable_values for card in self.cards))
+        return all((card.rank in playable_values for card in self.cards))
 
 class PlayToSelfFromDeck(_PlayToPlayer):
     def __call__(self, player : AbstractPlayer, target : AbstractPlayer, cards : List[Card]):
@@ -165,7 +165,7 @@ class PlayFallFromHand(Turn):
         
     def check_cards_fall(self):
         """Returns whether all the pairs are correctly played"""
-        return all([utils.check_can_fall_card(pc,fc,self.moskaGame.trump) for pc,fc in self.play_fall.items()])
+        return all([utils.check_can_kill_card(pc,fc,self.moskaGame.trump) for pc,fc in self.play_fall.items()])
     
     def check_cards_available(self) -> bool:
         """ Check that the cards are playable.
@@ -234,7 +234,7 @@ class PlayFallFromDeck(Turn):
             if not self.check_can_fall(in_=[play_fall[1]]):
                 self.player.plog.error(f"The card {self.card} can not fall {play_fall[1]}. Falling a random card.")
                 for card in self.moskaGame.cards_to_fall:
-                    if utils.check_can_fall_card(self.card, card, self.moskaGame.trump):
+                    if utils.check_can_kill_card(self.card, card, self.moskaGame.trump):
                         play_fall = (self.card,card)
                         break
             self.player.plog.info(f"Playing kopled card {play_fall[0]} to {play_fall[1]}")
@@ -251,7 +251,7 @@ class PlayFallFromDeck(Turn):
     def check_can_fall(self,in_ = None):
         """ Return if the card can fall a card on the table """
         in_ = self.moskaGame.cards_to_fall if not in_ else in_
-        return any([utils.check_can_fall_card(self.card,fc,self.moskaGame.trump) for fc in in_])
+        return any([utils.check_can_kill_card(self.card,fc,self.moskaGame.trump) for fc in in_])
 
 class EndTurn(Turn):
     """ Class representing ending a turn. """

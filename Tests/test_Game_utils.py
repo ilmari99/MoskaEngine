@@ -2,7 +2,7 @@ import unittest
 from typing import Sequence, List, Iterable
 import sys
 import os
-from MoskaEngine.Game.utils import check_signature, add_before, suit_to_symbol, check_can_fall_card
+from MoskaEngine.Game.utils import check_signature, add_before, suit_to_symbol, check_can_kill_card
 from MoskaEngine.Game.utils import get_config_file, raise_config_not_found_error, get_model_file, raise_model_not_found_error
 from MoskaEngine.Game.Deck import Card
 
@@ -34,22 +34,22 @@ class TestFunctions(unittest.TestCase):
         played_card = Card(7, "H")
         fall_card = Card(5, "H")
         trump = "S"
-        self.assertTrue(check_can_fall_card(played_card, fall_card, trump))
+        self.assertTrue(check_can_kill_card(played_card, fall_card, trump))
         
         played_card = Card(10, "D")
         fall_card = Card(2, "H")
         trump = "S"
-        self.assertFalse(check_can_fall_card(played_card, fall_card, trump))
+        self.assertFalse(check_can_kill_card(played_card, fall_card, trump))
         
         played_card = Card(8, "S")
         fall_card = Card(3, "C")
         trump = "S"
-        self.assertTrue(check_can_fall_card(played_card, fall_card, trump))
+        self.assertTrue(check_can_kill_card(played_card, fall_card, trump))
         
         played_card = Card(6, "C")
         fall_card = Card(6, "H")
         trump = "D"
-        self.assertFalse(check_can_fall_card(played_card, fall_card, trump))
+        self.assertFalse(check_can_kill_card(played_card, fall_card, trump))
 
     def test_read_all_existing_configs(self):
         # Load the already existing config files from root + "/Play/PlayerConfigs/*.json"
@@ -136,7 +136,7 @@ class TestFunctions(unittest.TestCase):
             raise_model_not_found_error(model)
         one_of = os.listdir(os.environ["MOSKA_ROOT_PATH"] + "/Models/")
         # Assert the exception message
-        expected_message = f"Model file {model} not found. Use a custom .tflite model or one of: {one_of}"
+        expected_message = f"Model file {model} not found. Use a direct path to a .tflite model or one of: {one_of}"
         self.assertEqual(str(context.exception), expected_message)
 
 

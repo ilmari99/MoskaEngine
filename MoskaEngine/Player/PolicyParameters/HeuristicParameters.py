@@ -71,7 +71,7 @@ class HeuristicParameters():
         This calls the corresponding method from the player, to see which cards the player is going to play"""
         
         e_lifted = self.expected_value_from_lift()
-        most_falls = max((len(falls) for card, falls in self.player.moskaGame.card_monitor.cards_fall_dict.items()))
+        most_falls = max((len(falls) for card, falls in self.player.moskaGame.card_monitor.cards_kill_dict.items()))
         self.player.plog.info(f"Expected score from deck: {e_lifted}")
         self.player.plog.info(f"Most falling card: {most_falls}")
         move_scores = {}
@@ -128,7 +128,7 @@ class HeuristicParameters():
                 if card != Card(-1,"X"):
                     cards_not_in_deck.append(card)
         self.player.plog.debug(f"Cards NOT in deck: {len(cards_not_in_deck)}")
-        cards_possibly_in_deck = set(game.card_monitor.cards_fall_dict.keys()).difference(cards_not_in_deck)
+        cards_possibly_in_deck = set(game.card_monitor.cards_kill_dict.keys()).difference(cards_not_in_deck)
         self.player.plog.debug(f"Cards possibly in deck: {len(cards_possibly_in_deck)}")
         try:
             total_possible_falls = sum((c.score for c in cards_possibly_in_deck))
@@ -145,10 +145,10 @@ class HeuristicParameters():
     def fall_card_scale_hand_play_score(self, hcard: Card, tcard: Card, **kwargs) -> float:
         scale = 1
         # If value is already played
-        if hcard.value in set([c.value for c in self.player.moskaGame.cards_to_fall]):
+        if hcard.rank in set([c.rank for c in self.player.moskaGame.cards_to_fall]):
             scale += self.method_values["fall_card_already_played_value"]
         # If I already have same values in hand, it is perhaps easier to get rid of the card if lifted -> Increase the score
-        if tcard.value in set([c.value for c in self.player.hand.cards]):
+        if tcard.rank in set([c.rank for c in self.player.hand.cards]):
             scale += self.method_values["fall_card_same_value_already_in_hand"]
         # If the card has been kopled and is preventing us from kopling again
         if tcard.kopled and len(self.player.moskaGame.deck) > 0:

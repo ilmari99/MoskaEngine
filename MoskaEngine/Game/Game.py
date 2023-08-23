@@ -62,17 +62,17 @@ class MoskaGame:
     EXIT_FLAG = False                       # Whether the game is running or not. If this is True, then no-one can obtain the lock, threads will stop, and start() will return
     IS_RUNNING = False                      # Currently no real use
     def __init__(self,
-                 deck : StandardDeck = None,
                  players : List[AbstractPlayer] = [],
-                 nplayers : int = 0,
                  log_file : str = "",
                  log_level = logging.INFO,
+                 in_folder : str = ".",
                  timeout=3,
                  random_seed=None,
                  gather_data : bool = True,
-                 model_paths : List[str] = [""],
+                 model_paths : List[str] = [],
                  player_evals : str = "", # Either 'save', or 'plot' or ''
                  print_format : str = "basic", # Either 'basic', 'with_cards', 'with_evals', 'human'
+                 deck : StandardDeck = None,
                  in_console : bool = False,
                  in_web : bool = False,
                  ):
@@ -89,6 +89,7 @@ class MoskaGame:
             model_paths (List[str], optional): The paths to the models to use. Defaults to [""]. If the paths are empty, no neural network based models can be used.
         """
         self.nturns = 0
+        self.in_folder = in_folder
         if in_console and in_web:
             raise ValueError("Cannot be in both console and web")
         self.in_console = in_console
@@ -103,7 +104,8 @@ class MoskaGame:
         self.player_evals_data : Dict[int,List[int]] = {}
         self.threads = {}
         self.log_level = log_level
-        self.log_file = log_file if log_file else os.devnull
+        os.makedirs(in_folder,exist_ok=True)
+        self.log_file = os.path.join(in_folder,log_file) if log_file else os.devnull
         self.interpreters = []
         self.input_details = []
         self.output_details = []
@@ -111,7 +113,7 @@ class MoskaGame:
         self.set_model_vars_from_paths()
         self.random_seed = random_seed if random_seed else int(10000000*random.random())
         self.deck = deck if deck else StandardDeck(seed = self.random_seed)
-        self.players = players if players else self._get_random_players(nplayers)
+        self.players = players
         self.timeout = timeout
         self.EXIT_FLAG = False
         self.card_monitor = CardMonitor(self)
@@ -133,6 +135,9 @@ class MoskaGame:
         # Loop through the model paths, and convert shorthands to absolute paths and check that they all exist
         orig_paths = self.model_paths
         self.model_paths = [utils.get_model_file(path) for path in self.model_paths]
+        if not self.model_paths:
+            self.glog.info(f"No models specified.")
+            return
         for i, path in enumerate(self.model_paths):
             if not path:
                 utils.raise_model_not_found_error(orig_paths[i])
@@ -448,7 +453,7 @@ class MoskaGame:
             #    self.glog.info(f"{self._basic_repr_with_cards()}")
             if self.in_console and move != "Skip":
                 print(f"{self._basic_repr_with_human_evals()}")
-            elif self.in_web:
+            elif self.in_web and move != "Skip":
                 # Print the full json in one line
                 s = self._basic_json_repr()
                 s = s.replace("\n","")
@@ -746,14 +751,14 @@ class MoskaGame:
         trump_card = self.deck.pop_cards(1)[0]
         self.trump = trump_card.suit
         # Get the player with the trump 2 in hand
-        p_with_2 = self.get_players_condition(cond = lambda x : any((x.suit == self.trump and x.value==2 for x in x.hand.cards)))
+        p_with_2 = self.get_players_condition(cond = lambda x : any((x.suit == self.trump and x.rank==2 for x in x.hand.cards)))
         # Swap the card if possible
         self._orig_trump_card = trump_card
         if p_with_2:
             assert len(p_with_2) == 1, "Multiple people have valtti 2 in hand."
             p_with_2 = p_with_2[0]
             p_with_2.hand.add([trump_card])
-            trump_card = p_with_2.hand.pop_cards(cond = lambda x : x.suit == self.trump and x.value == 2)[0]
+            trump_card = p_with_2.hand.pop_cards(cond = lambda x : x.suit == self.trump and x.rank == 2)[0]
             self.glog.info(f"Removed {trump_card} from {p_with_2.name}")
             if self.in_console:
                 print(f"Player {p_with_2.name} had trump 2 in hand. Swapping {self._orig_trump_card} with {trump_card}")
@@ -829,10 +834,14 @@ class MoskaGame:
         self._set_trump()
         self._create_locks()
         self.glog.info(f"Starting the game with seed {self.random_seed}...")
+        os.makedirs(self.in_folder,exist_ok=True)
+        old_dir = os.getcwd()
+        os.chdir(self.in_folder)
         self._start_player_threads()
         self.glog.info(f"Started moska game with players {[pl.name for pl in self.players]}")
         # Wait for the threads to finish, fail, or timeout
         success = self._join_threads()
+        os.chdir(old_dir)
         if not success:
             return None
         self.glog.info("Final ranking: ")
@@ -843,13 +852,18 @@ class MoskaGame:
         if self.GATHER_DATA:
             balance, shuffle = (False, False) if self.has_graphics else (True, True)
             state_results = self.get_player_state_vectors(shuffle = shuffle, balance = balance)
-            with open("Vectors/"+self.get_random_file_name(),"w") as f:
+            vector_path = os.path.join(self.in_folder,"Vectors")
+            os.makedirs(vector_path,exist_ok=True)
+            with open(os.path.join(vector_path,self.get_random_file_name()),"w") as f:
                 data = str(state_results).replace("], [","\n").replace(" ","")
                 data = data.strip("[]")
                 f.write(data)
         if self.player_evals_data:
             for pid, pl in enumerate(self.players):
                 self.glog.info(f"{pl.name} : {self.player_evals_data[pid]}")
+        # Close the logger
+        for handler in self.glog.handlers:
+            handler.close()
         # If plotting data, plot the data
         if self.player_evals == "plot":
             self.plot_evaluations()

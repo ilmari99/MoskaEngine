@@ -62,7 +62,7 @@ class _ScoreCards:
     
     def _count_cards_score(self, card : Card):
         """ Return how many cards can the input card fall. Uses the card_monitor to count the cards."""
-        return len(self.player.moskaGame.card_monitor.cards_fall_dict[card])
+        return len(self.player.moskaGame.card_monitor.cards_kill_dict[card])
     
     def _basic_count_score(self,card : Card) -> int:
         """Return how many cards can the input card fall;
@@ -78,9 +78,9 @@ class _ScoreCards:
             int: How many cards the card can fall
         """
         if card.suit == self.player.moskaGame.trump:
-            return 4*13 - (14 - card.value)
+            return 4*13 - (14 - card.rank)
         else:
-            return 12 - (14 - card.value)
+            return 12 - (14 - card.rank)
     
     def _assign_scores(self, cards : Iterable[Card],method : Callable = "default") -> List[Card]:
         """Create new Card instances, with the Card instances from Iterable.

@@ -27,7 +27,7 @@ class Assignment:
 def _map_to_list(card : Card, to : List[Card], trump : str) -> List[Card]:
     """ Return a list of cards, that the input card can fall from `to` list of cards.
     """
-    return [c for c in to if utils.check_can_fall_card(card,c,trump)]
+    return [c for c in to if utils.check_can_kill_card(card,c,trump)]
 
 def _map_each_to_list(from_ : List[Card] , to : List[Card], trump : str) -> Dict[Card,List[Card]]:
     """Map each card in hand, to cards on the table, that can be fallen. Returns a dictionary of from_c : List_t pairs.

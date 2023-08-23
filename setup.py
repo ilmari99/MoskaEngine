@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='MoskaEngine',
-    version='0.1.5',
+    version='0.1.6',
     description='A card game engine for the card game Moska. Contains game engine, players, simulation tools, and human interface.',
     long_description=long_description,
     long_description_content_type="text/markdown",

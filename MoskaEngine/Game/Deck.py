@@ -9,14 +9,14 @@ class Card:
     """ A class representing a card.
     This is sort of like a named tuple, but with more freedom to customize
     """
-    value : int = None
+    rank : int = None
     suit : str = None
     kopled : bool = False
     score : int = None
     _frozen : bool = False
     
-    def __init__(self,value,suit,kopled=False,score=None):
-        self.value = value
+    def __init__(self,rank,suit,kopled=False,score=None):
+        self.rank = rank
         self.suit = suit
         self.kopled = kopled
         self.score = score
@@ -24,31 +24,31 @@ class Card:
     
     def __setattr__(self, name, value):
         ## TODO
-        if name in ["value","suit"] and self._frozen:
+        if name in ["rank","suit"] and self._frozen:
             raise TypeError(f"{name} can not be set, as it is frozen.")
         super.__setattr__(self,name, value)
     
     def __hash__(self):
         """ Only hash by value and suit """
-        return hash((self.value,self.suit))
+        return hash((self.rank,self.suit))
         
     
     def __repr__(self) -> str:
         """ How to represent the card when printing"""
-        return str(f"{self.value}{utils.suit_to_symbol(self.suit)}")
+        return str(f"{self.rank}{utils.suit_to_symbol(self.suit)}")
     
     def as_str(self,symbol=True):
         """ Return the attributes as a string"""
         if symbol:
             return self.__repr__()
-        return str(f"{self.suit}{self.value}")
+        return str(f"{self.suit}{self.rank}")
     
     def __lt__(self,other):
         """ How to compare the card to others"""
-        return self.value < other.value
+        return self.rank < other.rank
     
     def __eq__(self,other):
-        return self.value == other.value and self.suit == other.suit
+        return self.rank == other.rank and self.suit == other.suit
     
 
 class StandardDeck:

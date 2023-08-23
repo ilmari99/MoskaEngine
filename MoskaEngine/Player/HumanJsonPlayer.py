@@ -33,17 +33,22 @@ class HumanJsonPlayer(AbstractPlayer):
         # Input should be formatted as: "play;0,1 2,3" or "play;" or "exit;" or "play;1,2,3,4"
         # Where 'play' is the action string identifier, so one of the playable moves.
         while True:
-            inp = input().strip("()\n")
+            inp = input().strip("()\n ")
             self.plog.info(f"Input: {inp}")
-            action, args = inp.split(";")
+            inp_split = inp.split(";")
+            # The input must have exactly 2 parts, the action and the arguments
+            if len(inp_split) != 2:
+                print(f"Incorrect input. Input should be formatted as: 'play;0,1 2,3' or 'play;' or 'exit;'")
+                continue
+            action, args = inp_split
             self.move_args = args
             if action == "exit":
                 self.EXIT_STATUS = 2
                 self.plog.info(f"Player chose to exit the game.")
                 print(f"Exiting game...")
                 return "exit"
-            if action not in playable:
-                print(f"Incorrect action. Action must be one of: {playable}")
+            if action not in playable or (args == "" and action not in ["Skip", "PlayFallFromDeck"]):
+                print(f"Incorrect action. Action must have arguments unless it's 'Skip' and be one of: {playable}")
                 continue
             break
         return action
