@@ -28,7 +28,7 @@ def create_dataset(nrounds : int,
     if nplayers != 4:
         raise NotImplementedError("Only 4 players supported at the moment.")
     CWD = os.getcwd()
-    model_paths = ["Model-nn1-BB","ModelNN1"]
+    model_paths = ["Model-nn1-BB","ModelNN1"] if players == "random" else []
     gamekwargs = {
         **{"log_file" : "Game-{x}.log",
         "log_level" : logging.DEBUG,
