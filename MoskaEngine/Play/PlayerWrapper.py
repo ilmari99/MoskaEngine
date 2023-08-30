@@ -26,7 +26,7 @@ class PlayerWrapper:
         # If the user wants to create multiple instances of the same player,
         # add a number to the name and log file.
         if number >= 0:
-            settings["name"] = settings["name"] + f"_{number}"
+            settings["name"] = settings.get("name", player_class.__name__) + f"_{number}"
             if "log_file" in settings:
                 settings["log_file"] = settings["log_file"].split(".")[0] + f"_{number}.log"
             else:
