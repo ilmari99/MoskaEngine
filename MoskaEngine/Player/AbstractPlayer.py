@@ -326,7 +326,7 @@ class AbstractPlayer(ABC):
         # Call the game to play the move. Catches Assertion (incorrect move) and Type errors
         success, msg  = self.moskaGame._make_move(move,args)
         # If gathering data, save the state vector
-        if (success and (move != "Skip" or len(self.state_vectors) == 0)) and self.moskaGame.GATHER_DATA:
+        if (success and (move != "Skip" or len(self.state_vectors) == 0 or random.random() < 0.25)) and self.moskaGame.GATHER_DATA:
             state = FullGameState.from_game(self.moskaGame, copy=False)
             vec = state.as_perspective_vector(self,fmt="bitmap")
             self.state_vectors.append(vec)
