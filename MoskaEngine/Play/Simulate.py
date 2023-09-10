@@ -58,6 +58,7 @@ def play_games(players : List[PlayerWrapper],
                chunksize : int = 1,
                shuffle_player_order : bool = True,
                verbose : bool = True,
+               max_time : int = None,
                ):
     """ Simulate multiple moska games with specified players. Return the rankings in finishing order.
     The players are specified by a list of tuples, with AbstractPlayer subclass and argument pairs.
@@ -73,7 +74,8 @@ def play_games(players : List[PlayerWrapper],
     Returns:
         list[List] : A list of lists, where each sublist contains the finishing ranks of a game.
     """
-    
+    if max_time is None:
+        max_time = 30
     start_time = time.time()
     # Select the specified number of cpus, or how many cpus are available
     cpus = min(os.cpu_count(),ngames) if cpus==-1 else cpus
@@ -83,27 +85,29 @@ def play_games(players : List[PlayerWrapper],
     print(f"Starting a pool with {cpus} processes and {chunksize} chunksize...")
     with multiprocessing.Pool(cpus) as pool:
         # Lazily run games distributing 'chunksize' games to each process. The results will not be ordered.
-        gen = pool.imap_unordered(run_game,arg_gen,chunksize = chunksize)
+        gen = pool.map_async(run_game,arg_gen,chunksize = chunksize)
         failed_games = 0
         start = time.time()
         # Loop while there are games.
-        while gen:
+        while not gen.ready():
             # Print statistics every 10 seconds. TODO: Not working, fix.
             if verbose and int(time.time() - start) % 10 == 0:
                 print(f"Simulated {len(results)/ngames*100:.2f}% of games. {len(results) - failed_games} succesful games. {failed_games} failed.",flush=True)
-            try:
-                # res contains either the finish ranks, or None if the game failed
-                res = next(gen)
-            except StopIteration as si:
+            if time.time() - start_time > max_time:
+                print(f"Max time of {max_time} seconds exceeded. Terminating pool.")
+                print(f"Simulated {len(results)/ngames*100:.2f}% of games. {len(results) - failed_games} succesful games. {failed_games} failed.",flush=True)
+                # We must force the pool to terminate, otherwise it will wait for all processes to finish.
+                #curr_proc_id = os.getpid()
+                # Terminate all python3 processes, except the current one.
+                #os.system(f"pkill -9 -f python3 -P {curr_proc_id}")
+                pool.close()
+                pool.terminate()
+                # Wait for the pool to terminate
+                #pool.join()
                 break
-            if res is None:
-                failed_games += 1
-            results.append(res)
-    
-    print(f"Simulated {len(results)/ngames * 100:.2f}% of games. {len(results) - failed_games} succesful games. {failed_games} failed.")
-    print(f"Time taken: {time.time() - start_time}")
-    if verbose:
-        get_loss_percents(results)
+            results = gen.get()
+            failed_games = results.count(None)
+    print(f"Finished simulating {len(results)/ngames*100:.2f}% of games. {len(results) - failed_games} succesful games. {failed_games} failed.",flush=True)
     return results
 
 def get_loss_percents(results, player="all", show = True):
