@@ -46,15 +46,15 @@ def create_dataset(nrounds : int,
     for i in range(nrounds):
         start_time = time.time()
         acting_players = get_random_players(nplayers, use_HIF=use_HIF,shared_kwargs=shared_player_kwargs) if players == "random" else players
-        print(f"Round {i+1} players:")
-        for p in acting_players:
-            print(p)
+        if verbose:
+            print(f"Round {i+1} players:")
+            for p in acting_players:
+                print(p)
         make_log_dir(folder,append=True)
         results = play_games(acting_players, gamekwargs, ngames=num_games, cpus=cpus, chunksize=chunksize,shuffle_player_order=True,verbose=verbose)
-        print(results)
         nsuccesful += len(tuple(filter(lambda x: x is not None, results)))
         os.chdir(CWD)
-        if not verbose:
+        if verbose:
             get_loss_percents(results)
         end_time = time.time()
         time_taken += (end_time - start_time)
