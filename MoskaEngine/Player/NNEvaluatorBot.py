@@ -20,18 +20,24 @@ class NNEvaluatorBot(AbstractEvaluatorBot):
                  log_file="",
                  max_num_states : int = 1000,
                  pred_format : str ="new",
-                 model_id : (str or int) = "all"
+                 model_id : (str or int) = "all",
+                 noise_level : float = 0.0,
                  ):
         self.pred_format = pred_format
         self.max_num_states = max_num_states
         self.model_id = model_id
+        self.noise_level = noise_level
         if not name:
             name = "NNEV"
         super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file, max_num_states)
         
     def evaluate_states(self, states: List[FullGameState]) -> List[float]:
         state_vectors = [state.as_perspective_vector(self,fmt=self.pred_format) for state in states]
-        preds = self.moskaGame.model_predict(np.array(state_vectors, dtype=np.float32), model_id=self.model_id).flatten().tolist()
+        preds = self.moskaGame.model_predict(np.array(state_vectors, dtype=np.float32), model_id=self.model_id).flatten()
+        # Add noise
+        if self.noise_level > 0:
+            preds += np.random.normal(0, self.noise_level, len(preds))
+        preds = preds.tolist()
         return preds
 
 
