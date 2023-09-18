@@ -128,7 +128,7 @@ class AbstractEvaluatorBot(AbstractPlayer):
         
         # Get a random sample of the plays. Evaluating each could take a long time
         # TODO: Prioritize by length?
-        assignments = random.sample(assignments, min(len(assignments), self.max_num_states))
+        assignments = random.sample(list(assignments), min(len(assignments), self.max_num_states))
         
         plays = []
         for play in assignments:
