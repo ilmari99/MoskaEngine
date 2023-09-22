@@ -405,6 +405,8 @@ class AbstractPlayer(ABC):
             "rank":self.rank,
             "ready":self.ready,
             "finished":self.EXIT_STATUS,
+            # Player is bot if "Human" not in the classname
+            "is_bot" : "Human" not in self.__class__.__name__,
             "last_evaluation" : self.moskaGame.player_evals_data.get(self.pid,[-1])[-1],
             "cards" : [c.as_str(symbol=False) for c in self.hand.cards],
             "playable_moves" : self._playable_moves(),
