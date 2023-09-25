@@ -2,6 +2,7 @@
 import argparse
 import logging
 import os
+import random
 import sys
 import sys
 from ..Game.Game import MoskaGame
@@ -31,12 +32,29 @@ def get_human_players(model_path : str = "Model-nn1-BB",
                      "requires_graphic":True
                      }
     opp_shared_kwargs = {"max_num_states":8000,"max_num_samples":1000,"model_id" : model_path, "pred_format" : pred_format}
-
+    
+    set_of_possible_names = ["Mikko", "Martti", "Kalle", "Riku", "Jussi", "Milla", "Laura", "Hansku", "Johanna", "Aaron", "Cecilia",
+                             "Luuva", "Kukko","Sikala", "Kikuli", "Nanna", "Mooses","Aliica", "Pirkko", "Meeri", "Tuija", "Tissit"
+                             ]
+    letter_to_number_converter = {"a":4, "e":3, "i":1, "o":0, "T": 7, "S": 5}
+    
+    # Select 3 random names from the list of possible names
+    random_names = random.sample(set_of_possible_names, 3)
+    
+    # For one of the names, replace the vowels with numbers
+    random_name = random.choice(random_names)
+    random_name_subs = "".join([str(letter_to_number_converter.get(letter,letter)) for letter in random_name.lower()])
+    random_names.append(random_name_subs)
+    random_names.remove(random_name)
+    # Shuffle the names
+    random.shuffle(random_names)
+    
+    
     players : List[PlayerWrapper] = []
     players.append(PlayerWrapper(HumanJsonPlayer, {**shared_kwargs, **{"name":human_name,"log_file":"Game-{x}-" +f"{human_name}" + ".log"}}))
-    players.append(PlayerWrapper.from_config("NN2-HIF",1,**{**opp_shared_kwargs,**shared_kwargs}))
-    players.append(PlayerWrapper.from_config("NN2-HIF",2,**{**opp_shared_kwargs,**shared_kwargs}))
-    players.append(PlayerWrapper.from_config("NN2-HIF",3,**{**opp_shared_kwargs,**shared_kwargs}))
+    players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[0]}}))
+    players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[1]}}))
+    players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[2]}}))
     return players
 
 def get_test_players(model_path : str = "./model.tflite",
@@ -108,6 +126,7 @@ def play_as_human(model_path = "Model-nn1-BB",
         # XOR of these should be true; either but not both
         "in_console" : False,
         "in_web" : True,
+        "gather_jsons" : True,
     }
     # Convert general game arguments to game specific arguments (replace '{x}' with game_id)
     game_args = args_to_gamekwargs(gamekwargs,players,gameid = game_id,shuffle = True)

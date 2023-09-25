@@ -75,6 +75,7 @@ class MoskaGame:
                  deck : StandardDeck = None,
                  in_console : bool = False,
                  in_web : bool = False,
+                 gather_jsons : bool = False,
                  ):
         """Initialize the game, by setting the deck, models, players, card monitor and some other variables.
         Args:
@@ -101,6 +102,12 @@ class MoskaGame:
         # The plot is about the progression of the state evaluations of each player (evals vs turns)
         self.player_evals = player_evals
         self.print_format = print_format
+        self.gather_jsons = gather_jsons
+        # Write the states of the game to a json file
+        if self.gather_jsons:
+            self.jsons_file = os.path.join(in_folder,"jsons.json")
+            with open(self.jsons_file,"w") as f:
+                f.write("[\n")
         self.player_evals_data : Dict[int,List[int]] = {}
         self.threads = {}
         self.log_level = log_level
@@ -460,6 +467,11 @@ class MoskaGame:
                 s = s.replace(" ","")
                 s = s.replace("\t","")
                 print(s)
+            if self.gather_jsons and move != "Skip":
+                with open(self.jsons_file,"a") as f:
+                    s = self._basic_json_repr()
+                    f.write(s)
+                    f.write(",\n")
         # If the move is something else than Skip, have all players play again, except the player who just played
         # The target player can only end their turn, after every opponent has played a Skip move. Kind of like checking in poker.
         if move != "Skip":
@@ -846,6 +858,9 @@ class MoskaGame:
         self.glog.info(f"Started moska game with players {[pl.name for pl in self.players]}")
         # Wait for the threads to finish, fail, or timeout
         success = self._join_threads()
+        if self.gather_jsons:
+            with open(self.jsons_file,"a") as f:
+                f.write("]\n")
         os.chdir(old_dir)
         if not success:
             return None
