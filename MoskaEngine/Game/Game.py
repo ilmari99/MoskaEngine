@@ -821,7 +821,12 @@ class MoskaGame:
         ax.set_title("Evaluations of players",fontsize=20)
         fig.set_size_inches(15,10)
         ax.grid()
-        plt.show()
+        if self.player_evals == "plot":
+            plt.show()
+        elif self.player_evals == "save-plot":
+            save_to_file = self.log_file
+            save_to_file = save_to_file.replace(".log",".png")
+            plt.savefig(os.path.join(self.in_folder,save_to_file))
         return
     
     def start(self) -> List[Tuple[str,int]]:
@@ -865,7 +870,7 @@ class MoskaGame:
         for handler in self.glog.handlers:
             handler.close()
         # If plotting data, plot the data
-        if self.player_evals == "plot":
+        if "plot" in self.player_evals:
             self.plot_evaluations()
         # Sort the ranks by rank
         ranks = sorted(ranks,key = lambda x : x[1] if x[1] is not None else float("inf"))
