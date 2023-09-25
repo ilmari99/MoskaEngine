@@ -103,7 +103,7 @@ def play_as_human(model_path = "Model-nn1-BB",
         "log_level" : logging.DEBUG,
         "timeout" : 2000,
         "model_paths":model_path,
-        "player_evals" : "save",
+        "player_evals" : "save-plot",
         "print_format" : "basic_with_card_symbols",
         # XOR of these should be true; either but not both
         "in_console" : False,
