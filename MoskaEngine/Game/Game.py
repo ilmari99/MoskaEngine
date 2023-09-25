@@ -103,16 +103,18 @@ class MoskaGame:
         self.player_evals = player_evals
         self.print_format = print_format
         self.gather_jsons = gather_jsons
-        # Write the states of the game to a json file
-        if self.gather_jsons:
-            self.jsons_file = os.path.join(in_folder,"jsons.json")
-            with open(self.jsons_file,"w") as f:
-                f.write("[\n")
         self.player_evals_data : Dict[int,List[int]] = {}
         self.threads = {}
         self.log_level = log_level
         os.makedirs(in_folder,exist_ok=True)
         self.log_file = os.path.join(in_folder,log_file) if log_file else os.devnull
+        # Write the states of the game to a json file
+        if self.gather_jsons:
+            self.jsons_file = self.log_file
+            if self.jsons_file != os.devnull:
+                self.jsons_file = self.jsons_file.replace(".log",".json")
+            with open(self.jsons_file,"w") as f:
+                f.write("[\n")
         self.interpreters = []
         self.input_details = []
         self.output_details = []
@@ -860,7 +862,10 @@ class MoskaGame:
         success = self._join_threads()
         if self.gather_jsons:
             with open(self.jsons_file,"a") as f:
-                f.write("]\n")
+                # Remove the last ',\n'
+                f.truncate(f.tell()-3)
+                # Write the end of the json
+                f.write("\n]")
         os.chdir(old_dir)
         if not success:
             return None
