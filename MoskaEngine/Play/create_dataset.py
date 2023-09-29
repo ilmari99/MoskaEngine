@@ -6,6 +6,8 @@ from typing import Any, Dict
 import warnings
 import time
 import sys
+
+import numpy as np
 from .Simulate import play_games, get_loss_percents
 from .Utils import make_log_dir, get_random_players
 
@@ -46,6 +48,19 @@ def create_dataset(nrounds : int,
     for i in range(nrounds):
         start_time = time.time()
         acting_players = get_random_players(nplayers, use_HIF=use_HIF,shared_kwargs=shared_player_kwargs) if players == "random" else players
+        acting_players = np.random.choice(players, size=nplayers, replace=False)
+        # Then, also gamekwargs is updated to only include the required models
+        model_ids = [p.settings["model_id"] for p in acting_players if hasattr(p,"settings") and "model_id" in p.settings]
+        # Flatten a list of lists
+        model_ids_new = []
+        for model_id in model_ids:
+            if isinstance(model_id,list):
+                model_ids_new += model_id
+            else:
+                model_ids_new.append(model_id)
+        model_ids = model_ids_new
+        model_ids = list(set(model_ids))
+        gamekwargs["model_paths"] = model_ids
         if verbose:
             print(f"Round {i+1} players:")
             for p in acting_players:
@@ -55,7 +70,7 @@ def create_dataset(nrounds : int,
         nsuccesful += len(tuple(filter(lambda x: x is not None, results)))
         os.chdir(CWD)
         if verbose:
-            get_loss_percents(results)
+            get_loss_percents(results, show = True)
         end_time = time.time()
         time_taken += (end_time - start_time)
         print(f"Round {i+1} took {end_time - start_time} seconds.")
