@@ -472,7 +472,16 @@ class AbstractPlayer(ABC):
                         self.plog.warning(msg)
                         self.ready = False
                         self.plog.debug(f"Player set to not ready, because of: {msg}")
-                        print(msg, flush=True)
+                        # If the game is in json format, send json
+                        if self.moskaGame.in_web:
+                            j = {
+                                "error" : msg,
+                                "type" : "illegal"
+                            }
+                            print(json.dumps(j),flush=True)
+                        else:
+                            print(msg, flush=True)
+                        
                         success, msg = self._play_move()
                 # If an exception was raised for some reason. Invalid move errors are caught, and do not end up here.
                 except Exception as msg:
