@@ -4,6 +4,7 @@ requirements = [
     "numpy==1.23.4",
     "scikit-learn==1.2.2",
     "tensorflow==2.12",
+    "matplotlib==3.8.0",
 ]
 
 # Read the README.md file
@@ -12,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='MoskaEngine',
-    version='0.1.10',
+    version='0.1.11',
     description='A card game engine for the card game Moska. Contains game engine, players, simulation tools, and human interface.',
     long_description=long_description,
     long_description_content_type="text/markdown",
