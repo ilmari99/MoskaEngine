@@ -17,6 +17,14 @@ class HumanJsonPlayer(AbstractPlayer):
             name = "Human"
         super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file)
         self.move_args : str = ""
+        
+    def print_err_json(self, err: str):
+        """ Print the error in a JSON format. """
+        j = {
+            "error": err,
+            "type":"format"
+        }
+        print(j)
     
     def choose_move(self, playable) -> str:
         if len(playable) == 1 and playable[0] == "Skip":
@@ -38,7 +46,7 @@ class HumanJsonPlayer(AbstractPlayer):
             inp_split = inp.split(";")
             # The input must have exactly 2 parts, the action and the arguments
             if len(inp_split) != 2:
-                print(f"Incorrect input. Input should be formatted as: 'play;0,1 2,3' or 'play;' or 'exit;'")
+                self.print_err_json(f"Incorrect input. Input should be formatted as: 'play;0,1 2,3' or 'play;' or 'exit;'")
                 continue
             action, args = inp_split
             self.move_args = args
@@ -48,7 +56,7 @@ class HumanJsonPlayer(AbstractPlayer):
                 print(f"Exiting game...")
                 return "exit"
             if action not in playable or (args == "" and action not in ["Skip", "PlayFallFromDeck"]):
-                print(f"Incorrect action. Action must have arguments unless it's 'Skip' and be one of: {playable}")
+                self.print_err_json(f"Incorrect action. Action must have arguments unless it's 'Skip' and be one of: {playable}")
                 continue
             break
         return action
@@ -89,7 +97,7 @@ class HumanJsonPlayer(AbstractPlayer):
         try:
             return [self.hand.cards[i] for i in indices]
         except IndexError:
-            print(f"Selected card doesn't exist (IndexError).")
+            self.print_err_json(f"Selected card doesn't exist (IndexError).")
         return []
     
     def play_to_target(self) -> List[Card]:
@@ -98,7 +106,7 @@ class HumanJsonPlayer(AbstractPlayer):
         try:
             return [self.hand.cards[i] for i in indices]
         except IndexError:
-            print(f"Selected card doesn't exist (IndexError).")
+            self.print_err_json(f"Selected card doesn't exist (IndexError).")
     
     def play_fall_card_from_hand(self) -> dict:
         """ Card-in-hand and card-to-fall pairs. """
@@ -109,7 +117,7 @@ class HumanJsonPlayer(AbstractPlayer):
             try:
                 out[self.hand.cards[indices[i]]] = self.moskaGame.cards_to_fall[indices[i+1]]
             except IndexError:
-                print(f"Selected card doesn't exist (IndexError).")
+                self.print_err_json(f"Selected card doesn't exist (IndexError).")
         return out
     
     def deck_lift_fall_method(self, deck_card: Card) -> tuple:
@@ -124,10 +132,10 @@ class HumanJsonPlayer(AbstractPlayer):
             ind = int(ind)
             return (deck_card, self.moskaGame.cards_to_fall[ind])
         except ValueError:
-            print(f"Selected card doesn't exist (ValueError).")
+            self.print_err_json(f"Selected card doesn't exist (ValueError).")
             return self.deck_lift_fall_method(deck_card)
         except IndexError:
-            print(f"Selected card doesn't exist (IndexError).")
+            self.print_err_json(f"Selected card doesn't exist (IndexError).")
             return self.deck_lift_fall_method(deck_card)
     
     
