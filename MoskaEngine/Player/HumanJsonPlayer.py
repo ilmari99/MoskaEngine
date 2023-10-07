@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from typing import TYPE_CHECKING, List
 from .AbstractPlayer import AbstractPlayer
 from ..Game.Deck import Card
@@ -24,7 +25,7 @@ class HumanJsonPlayer(AbstractPlayer):
             "error": err,
             "type":"format"
         }
-        print(j)
+        print(json.dumps(j))
     
     def choose_move(self, playable) -> str:
         if len(playable) == 1 and playable[0] == "Skip":
