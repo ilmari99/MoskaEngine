@@ -9,6 +9,7 @@ from ..Game.Game import MoskaGame
 from typing import Any, Callable, Dict, Iterable, List, Tuple
 from ..Player.NNHIFEvaluatorBot import NNHIFEvaluatorBot
 from ..Player.HumanJsonPlayer import HumanJsonPlayer
+from ..Player.HumanTestPlayer import HumanTestPlayer
 from .Utils import args_to_gamekwargs, make_log_dir,get_random_players, replace_setting_values
 from .PlayerWrapper import PlayerWrapper
 from argparse import ArgumentParser
@@ -66,6 +67,7 @@ def get_human_players(model_path : str = "Model-nn1-BB",
 
 def get_test_players(model_path : str = "./model.tflite",
                            pred_format : str = "bitmap",
+                           human_name = "Human",
                            ) -> List[PlayerWrapper]:
     """Returns a list of four identical PlayerWrapper(NNHIFEvaluatorBot)s, using the model found in model_path, with pred_format.
     This is used for testing purposes.
@@ -82,7 +84,7 @@ def get_test_players(model_path : str = "./model.tflite",
     players.append(PlayerWrapper.from_config("NN2-HIF",1,**shared_kwargs))
     players.append(PlayerWrapper.from_config("NN2-HIF",2,**shared_kwargs))
     players.append(PlayerWrapper.from_config("NN2-HIF",3,**shared_kwargs))
-    players.append(PlayerWrapper.from_config("NN2-HIF",4,**shared_kwargs))
+    players.append(PlayerWrapper(HumanTestPlayer, {"name":human_name},infer_log_file=True,number=4))
     return players
 
 def get_next_game_id(path : str, filename : str) -> int:
@@ -114,7 +116,7 @@ def play_as_human(model_path = "Model-nn1-BB",
     print(f"Starting game number {game_id} of player {human_name}")
     # Get a list of players
     if test:
-        players = get_test_players(model_path = model_path, pred_format=pred_format)
+        players = get_test_players(model_path = model_path, pred_format=pred_format, human_name=human_name)
     else:
         players = get_human_players(model_path = model_path, pred_format=pred_format, human_name=human_name)
     #players = get_test_human_players(model_path = "./Models/Model-nn1-fuller/model.tflite", pred_format="bitmap")
