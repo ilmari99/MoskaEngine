@@ -52,6 +52,13 @@ def get_human_players(model_path : str = "Model-nn1-BB",
     
     players : List[PlayerWrapper] = []
     players.append(PlayerWrapper(HumanJsonPlayer, {**shared_kwargs, **{"name":human_name,"log_file":"Game-{x}-" +f"{human_name}" + ".log"}}))
+    custom_nn_player_args = {
+        "model_id" : os.path.abspath("model-basic-from-1400k-only-NN.tflite"),
+        #"name" : random_names[0]
+    }
+    #players.append(PlayerWrapper(NNHIFEvaluatorBot, {**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[0]}, **custom_nn_player_args}))
+    #players.append(PlayerWrapper(NNHIFEvaluatorBot, {**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[1]}, **custom_nn_player_args}))
+    #players.append(PlayerWrapper(NNHIFEvaluatorBot, {**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[2]}, **custom_nn_player_args}))
     players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[0]}}))
     players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[1]}}))
     players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[2]}}))
@@ -120,7 +127,8 @@ def play_as_human(model_path = "Model-nn1-BB",
         "players" : players,
         "log_level" : logging.DEBUG,
         "timeout" : 2000,
-        "model_paths":model_path,
+        # [model_path] + 
+        "model_paths":model_path,#os.path.abspath("model-basic-from-1400k-only-NN.tflite"),
         "player_evals" : "save-plot",
         "print_format" : "basic_with_card_symbols",
         # XOR of these should be true; either but not both
@@ -133,6 +141,7 @@ def play_as_human(model_path = "Model-nn1-BB",
     # Changes to the log directory for the duration of the game
     make_log_dir(folder,append=True)
     game = MoskaGame(**game_args)
+    #print(game)
     out = game.start()
     os.chdir(cwd)
     return out
