@@ -460,6 +460,7 @@ class MoskaGame:
             #    self.glog.info(f"{self._basic_repr_with_all_evals_and_cards()}")
             #elif self.log_level == logging.INFO:
             #    self.glog.info(f"{self._basic_repr_with_cards()}")
+            player._set_rank()
             if self.in_console and move != "Skip":
                 print(f"{self._basic_repr_with_human_evals()}")
             elif self.in_web and move != "Skip":
@@ -863,7 +864,7 @@ class MoskaGame:
         if self.gather_jsons:
             with open(self.jsons_file,"a") as f:
                 # Remove the last ',\n'
-                f.truncate(f.tell()-3)
+                f.truncate(f.tell()-2)
                 # Write the end of the json
                 f.write("\n]")
         os.chdir(old_dir)
