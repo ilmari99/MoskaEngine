@@ -84,7 +84,7 @@ def get_test_players(model_path : str = "./model.tflite",
     players.append(PlayerWrapper.from_config("NN2-HIF",1,**shared_kwargs))
     players.append(PlayerWrapper.from_config("NN2-HIF",2,**shared_kwargs))
     players.append(PlayerWrapper.from_config("NN2-HIF",3,**shared_kwargs))
-    players.append(PlayerWrapper(HumanTestPlayer, {"name":human_name},infer_log_file=True,number=4))
+    players.append(PlayerWrapper(HumanTestPlayer, {"name":human_name},infer_log_file=True,number=-1))
     return players
 
 def get_next_game_id(path : str, filename : str) -> int:
