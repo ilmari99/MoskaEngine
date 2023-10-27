@@ -14,21 +14,24 @@ if __name__ == '__main__':
 
     pl_kwargs = {
         "name" : "player",
-        "model_id" : "NN2",
+        "model_id" : "ModelNN1",
+        "pred_format" : "bitmap",
+        "log_level" : logging.DEBUG,
+        "max_num_states" : 1000,
     }
 
     game_kwargs = {
-        "log_level" : logging.INFO,
-        "gather_data" : False,
+        "log_level" : logging.DEBUG,
+        "gather_data" : True,
         "timeout" : 10,
-        "model_paths" : ["NN2"]
+        "model_paths" : ["ModelNN1"],
     }
 
     shared_player_kwargs = {
-        "log_level" : logging.INFO,
+        "log_level" : logging.DEBUG,
     }
 
     results = []
     clean_up()
     #NOTE: Only run this benchmark on a heavy-duty machine, as it will take a long time to complete.
-    standard_benchmark(pl_type, pl_kwargs, game_kwargs, cpus=20, chunksize=3)
+    standard_benchmark(pl_type, pl_kwargs, game_kwargs, cpus=14, chunksize=1, custom_shared_pl_kwargs=shared_player_kwargs)
