@@ -38,9 +38,12 @@ class AbstractEvaluatorBot(AbstractPlayer):
                  log_level=logging.INFO,
                  log_file="",
                  max_num_states : int = 1000,
+                 # Top p sampling: For example 0.2 means we pick the move from the smallest set of plays whose cum p distr is > 0.2
+                 top_p_play : float = 0,
+                 top_p_weights : str = "uniform",
                  ):
-        # This is purely used for game complexity analysis from log files.
-        self.get_nmoves = True
+        self.top_p_play = top_p_play
+        self.top_p_weights = top_p_weights
         self.max_num_states = max_num_states
         super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file)
     
@@ -62,7 +65,7 @@ class AbstractEvaluatorBot(AbstractPlayer):
         self.plog.debug(f"Found {len(assignments)} from {self.hand.cards} to {self.moskaGame.cards_to_fall}")
         return assignments
     
-    def _get_move_prediction(self, move : str,get_n : bool = False) -> Tuple[Any,float]:
+    def _get_move_prediction(self, move : str) -> Tuple[Any,float]:
         """ Get a move and a prediction evaluation for the best move in a class of moves ("PlayToSelf" etc.).
         Finds all possible moves, for a class of moves, and evaluates the immediate next states.
         Returns the best moves arguments, and the evaluation.
@@ -81,24 +84,16 @@ class AbstractEvaluatorBot(AbstractPlayer):
             plays = ["unknown"]
             states = ["unknown"]
             evals = [float(np.mean(evals))]
-        combined = list(zip(plays, states, evals))
-        # Find the best move.
-        try:
-            best = max(combined, key=lambda x : x[2])
-        except:
-            print("Combined: ", combined, flush=True)
-            print("Evals: ", evals, flush=True)
-            print("Plays: ", plays, flush=True)
-            raise Exception("Could not find best play")
+
         if self.plog.getEffectiveLevel() >= logging.DEBUG:
             self.plog.debug(f"Moves and their evaluations:")
             s = []
             for play, eval_ in zip(plays,evals):
                 s.append(f"{play} : {eval_}")
             self.plog.debug("\n".join(s))
-        if get_n:
-            return best[0],best[2],len(plays)
-        return best[0],best[2]
+        #if get_all_plays_and_evals:
+        return plays, evals
+        #return best[0],best[2]
 
     def _make_mock_move(self,move,args) -> FullGameState:
         """ A wrapper around making a mock move, which is used to check the immediate next state.
@@ -417,22 +412,38 @@ class AbstractEvaluatorBot(AbstractPlayer):
         """
         self.plog.info("Choosing move...")
         self.plog.debug(f"{self.moskaGame._basic_repr_with_cards()}")
-        move_scores = {}
-        total_n_moves = 0
+        all_moves_list = []
         for move in playable:
-            if self.get_nmoves:
-                play,eval_,nmoves = self._get_move_prediction(move,get_n=True)
-                move_scores[move] = (play,eval_)
-                total_n_moves += nmoves
-            else:
-                move_scores[move] = self._get_move_prediction(move)
-        if self.get_nmoves:
-            self.plog.info(f"NMOVES: {len(self.moskaGame.deck)} , {total_n_moves}")
-        self.plog.info(f"Move scores: {move_scores}")
-        self.move_play_scores = move_scores
-        best_move = max(move_scores.items(),key=lambda x: x[1][1])
-        self.plog.info(f"Playing best move: {best_move}")
-        return best_move[0]
+            plays, evals = self._get_move_prediction(move)
+            #print(f"Found plays: {plays} for move: {move}")
+            #print(evals)
+            all_moves_list += [(move,play,eval_) for play,eval_ in zip(plays,evals)]
+            
+        # Get the evaluations, and apply softmax
+        evals = [x[2] for x in all_moves_list]
+        evals = np.array(evals)
+        exp_evals = np.exp(evals)
+        evals = exp_evals / np.sum(exp_evals)
+        # Sort the plays, so the biggest p is first
+        all_moves_list = sorted(all_moves_list, key=lambda x : x[2], reverse=True)
+        self.plog.info(f"Total number of possible moves: {len(all_moves_list)}")
+        #print(f"all_moves_list: {all_moves_list}")
+        cumsum = np.cumsum(evals)
+        #print(f"cumsum: {cumsum}")
+        # Find the index of the first play, whose cumsum is > top_p_play
+        valid_play_sep_idx = np.argmax(cumsum > self.top_p_play) + 1
+        valid_plays = all_moves_list[:valid_play_sep_idx]
+        evals_exp = np.exp([x[2] for x in valid_plays])
+        valid_evals = evals_exp  / np.sum(evals_exp )
+        self.plog.info(f"Found Top p={self.top_p_play} plays: {len(valid_plays)}")
+        #print(f"Valid plays: {valid_plays}")
+        # Randomly pick a play from the valid plays
+        chosen_move_idx = np.random.choice(np.arange(0,len(valid_plays),1), p = valid_evals if self.top_p_weights == "weighted" else None)
+        chosen_move = valid_plays[chosen_move_idx]
+        self.plog.info(f"Chosen move: {chosen_move[0]}")
+        chosen_move_str = chosen_move[0]
+        self.move_play_scores = {chosen_move_str : (chosen_move[1],chosen_move[2])}
+        return chosen_move_str
     
     def play_fall_card_from_hand(self) -> Dict[Card, Card]:
         """ Make the pre-computed play
