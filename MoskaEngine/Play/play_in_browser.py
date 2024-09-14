@@ -15,122 +15,105 @@ from .PlayerWrapper import PlayerWrapper
 from argparse import ArgumentParser
 import sys
 
-def get_human_players(model_path : str = "Model-nn1-BB",
+def get_n_bot_players(n : int,
+                      model_path : str = "Model-nn1-BB",
                       pred_format : str = "bitmap",
-                      human_name = "Human",
+                      override_kwargs : Dict[str,Any] = {},
                       ) -> List[PlayerWrapper]:
-    """Returns a list of
-    - Three identical PlayerWrapper(NNHIFEvaluatorBot)s, using the model found in model_path, with pred_format.
-    - One PlayerWrapper(HumanPlayer) that can be controlled by the user.
+    """Returns a list of n identical PlayerWrapper(NNHIFEvaluatorBot)s, using the model found in model_path, with pred_format.
     Args:
+        n (int): The number of players to return.
         model_path (str): Path to the model file.
         pred_format (str): The format of the predictions. Can be "bitmap" or "vector".
     Returns:
         List[PlayerWrapper]: A list of PlayerWrappers.
     """
     shared_kwargs = {"log_level" : logging.DEBUG,
-                     "delay":0.02,
-                     "requires_graphic":True
+                     "delay":0.002,
+                     "requires_graphic":True,
+                        "max_num_states":8000,
+                        "max_num_samples":1000,
+                        "model_id" : model_path,
+                        "pred_format" : pred_format,
                      }
-    opp_shared_kwargs = {"max_num_states":8000,"max_num_samples":1000,"model_id" : model_path, "pred_format" : pred_format}
-    
     set_of_possible_names = ["Mikko", "Martti", "Kalle", "Riku", "Jussi", "Milla", "Laura", "Hansku", "Johanna", "Aaron", "Cecilia",
-                             "Luuva", "Kukko","Sikala", "Kikuli", "Nanna", "Mooses","Aliica", "Pirkko", "Meeri", "Tuija", "Tissit"
+                             "Luuva", "Kukko","Sikala", "Cicceli", "Nanna", "Mooses","Aliica", "Pirkko", "Meeri", "Tuija"
                              ]
     letter_to_number_converter = {"a":4, "e":3, "i":1, "o":0, "T": 7, "S": 5}
-    
-    # Select 3 random names from the list of possible names
-    random_names = random.sample(set_of_possible_names, 3)
-    
-    # For one of the names, replace the vowels with numbers
-    random_name = random.choice(random_names)
-    random_name_subs = "".join([str(letter_to_number_converter.get(letter,letter)) for letter in random_name.lower()])
-    random_names.append(random_name_subs)
-    random_names.remove(random_name)
-    # Shuffle the names
-    random.shuffle(random_names)
-    
-    
     players : List[PlayerWrapper] = []
-    players.append(PlayerWrapper(HumanJsonPlayer, {**shared_kwargs, **{"name":human_name,"log_file":"Game-{x}-" +f"{human_name}" + ".log"}}))
-    custom_nn_player_args = {
-        "model_id" : os.path.abspath("model-basic-from-1400k-only-NN.tflite"),
-        #"name" : random_names[0]
-    }
-    #players.append(PlayerWrapper(NNHIFEvaluatorBot, {**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[0]}, **custom_nn_player_args}))
-    #players.append(PlayerWrapper(NNHIFEvaluatorBot, {**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[1]}, **custom_nn_player_args}))
-    #players.append(PlayerWrapper(NNHIFEvaluatorBot, {**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[2]}, **custom_nn_player_args}))
-    players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[0]}}))
-    players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[1]}}))
-    players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**opp_shared_kwargs,**shared_kwargs, **{"name":random_names[2]}}))
+    for i in range(n):
+        # Select a random name from the list of possible names
+        random_name = random.choice(set_of_possible_names)
+        # For one of the names, replace the vowels with numbers
+        random_name_subs = "".join([str(letter_to_number_converter.get(letter,letter)) for letter in random_name.lower()])
+        # Shuffle the names
+        random_names = random.sample([random_name,random_name_subs],2)
+        players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**shared_kwargs, **override_kwargs, **{"name":random_names[0]}}))
     return players
 
-def get_test_players(model_path : str = "./model.tflite",
-                           pred_format : str = "bitmap",
-                           human_name = "Human",
-                           ) -> List[PlayerWrapper]:
+def get_test_players(human_names : List[str] = ["Human"],
+        model_path : str = "./model.tflite",
+        pred_format : str = "bitmap",
+        ) -> List[PlayerWrapper]:
     """Returns a list of four identical PlayerWrapper(NNHIFEvaluatorBot)s, using the model found in model_path, with pred_format.
     This is used for testing purposes.
     """
     shared_kwargs = {"log_level" : logging.INFO,
                      "delay":0.02,
                      "requires_graphic":True,
-                     "max_num_states":8000,
-                     "max_num_samples":1000,
-                     "model_id":model_path,
-                     "pred_format":pred_format,
                      }
-    players = []
-    players.append(PlayerWrapper.from_config("NN2-HIF",1,**shared_kwargs))
-    players.append(PlayerWrapper.from_config("NN2-HIF",2,**shared_kwargs))
-    players.append(PlayerWrapper.from_config("NN2-HIF",3,**shared_kwargs))
-    players.append(PlayerWrapper(HumanTestPlayer, {"name":human_name},infer_log_file=True,number=-1))
-    return players
+    human_players = []
+    for name in human_names:
+        human_players.append(PlayerWrapper(HumanTestPlayer, {**shared_kwargs, **{"name":name,"log_file":"Game-{x}-" +f"{name}" + ".log"}}))
+    bot_players = get_n_bot_players(4 - len(human_players),model_path=model_path,pred_format=pred_format)
+    return human_players + bot_players
 
-def get_next_game_id(path : str, filename : str) -> int:
-    """Returns the next available game id, by checking which files exist in the given path.
+def get_multiple_human_players(human_names : List[str],
+        model_path : str = "Model-nn1-BB",
+        pred_format : str = "bitmap",
+        ) -> List[PlayerWrapper]:
+        """Returns a list of four players. First we create the human players, then we fill the rest with NNHIFEvaluatorBots.
+        """
+        human_kwargs = {"log_level" : logging.DEBUG,
+                     "delay":0.002,
+                     "requires_graphic":True,
+                     }
+        human_players = []
+        for name in human_names:
+            human_players.append(PlayerWrapper(HumanJsonPlayer, {**{"name":name},**human_kwargs},infer_log_file=True))
+        # Fill the rest with NNHIFEvaluatorBots
+        n_bots = 4 - len(human_players)
+        bot_players = get_n_bot_players(n_bots,model_path=model_path,pred_format=pred_format,override_kwargs=human_kwargs)
+        return human_players + bot_players
+
+def multiplayer_game(
+        human_names : List[str],
+        model_path = "Model-nn1-BB",
+        pred_format="bitmap",
+        game_id = 0,
+        test=False,
+        ):
+    """ Start a game with multiple human players. If we have less than 4 human players, the rest are NNHIFEvaluatorBots.
     """
-    if "{x}" not in filename:
-        raise ValueError("Filename must contain '{x}'")
-    # if the folder does not exist, return 0
-    if not os.path.exists(path):
-        return 0
-    # Pick any file that exists
-    unique_filename = os.listdir(path)[0]
-    i = -1
-    while os.path.exists(os.path.join(path, unique_filename)):
-        i += 1
-        unique_filename = replace_setting_values({"filename" : filename},game_id = i)["filename"]
-    print("Next game id",i)
-    return i
-
-
-def play_as_human(model_path = "Model-nn1-BB",
-                  pred_format="bitmap",
-                  test=False,
-                  human_name="Human",
-                  game_id = 0
-                  ):
-    """ Play as a human against three NNHIFEvaluatorBots. The order of the players is shuffled.
-    """
-    print(f"Starting game number {game_id} of player {human_name}")
-    # Get a list of players
+    assert len(human_names) <= 4, "We can have at most 4 players"
+    print(f"Starting game number {game_id} with players {human_names}")
+    players = get_multiple_human_players(human_names,
+                                         model_path = model_path,
+                                         pred_format=pred_format
+                                         )
     if test:
-        players = get_test_players(model_path = model_path, pred_format=pred_format, human_name=human_name)
-    else:
-        players = get_human_players(model_path = model_path, pred_format=pred_format, human_name=human_name)
-    #players = get_test_human_players(model_path = "./Models/Model-nn1-fuller/model.tflite", pred_format="bitmap")
+        players = get_test_players(human_names,
+                                   model_path = model_path,
+                                   pred_format=pred_format)
+
     cwd = os.getcwd()
-    folder = human_name + "-Games"
-    # Find the next available game id
-    #game_id = get_next_game_id("./" + folder,"HumanGame-{x}.log")
+    folder = human_names[0] + "-Games"
     gamekwargs = {
         "log_file" : "HumanGame-{x}.log",
         "players" : players,
         "log_level" : logging.DEBUG,
         "timeout" : 2000,
-        # [model_path] + 
-        "model_paths":model_path,#os.path.abspath("model-basic-from-1400k-only-NN.tflite"),
+        "model_paths":model_path,
         "player_evals" : "save-plot",
         "print_format" : "basic_with_card_symbols",
         # XOR of these should be true; either but not both
@@ -143,10 +126,17 @@ def play_as_human(model_path = "Model-nn1-BB",
     # Changes to the log directory for the duration of the game
     make_log_dir(folder,append=True)
     game = MoskaGame(**game_args)
-    #print(game)
     out = game.start()
     os.chdir(cwd)
     return out
+
+def parse_name_argument(name : str, sep=",") -> List[str]:
+    """ Parse a string of names, separated by commas. If the string is empty, return an empty list.
+    """
+    if not name:
+        return []
+    return name.split(sep)
+
 
 def parse_args(inp : List[str],skip_first = True):
     """ Parse a string of arguments, typically from the command line:
@@ -167,18 +157,12 @@ def parse_args(inp : List[str],skip_first = True):
 # This can be imported and run as a function with a string of arguments
 def run_as_command_line_program(args):
     args = parse_args(args,skip_first=True)
-    out = play_as_human(model_path = "Model-nn1-BB",
-                        human_name=args.name, test=args.test, game_id=args.gameid)
-    if out:
-        sys.exit(0)
-    else:
-        sys.exit(1)
-
-# This can be run as a command line program
-if __name__ == "__main__":
-    args = parse_args(sys.argv)
-    out = play_as_human(model_path = "Model-nn1-BB",
-                        human_name=args.name, test=args.test, game_id=args.gameid)
+    print(args.name)
+    names = parse_name_argument(args.name)
+    print(names)
+    out = multiplayer_game(human_names=names,test=args.test,game_id=args.gameid)
+    #out = play_as_human(model_path = "Model-nn1-BB",
+    #                    human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
         sys.exit(0)
     else:

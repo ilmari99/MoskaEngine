@@ -864,7 +864,7 @@ class MoskaGame:
         if self.gather_jsons:
             with open(self.jsons_file,"a") as f:
                 # Remove the last ',\n'
-                f.truncate(f.tell()-2)
+                f.truncate(f.tell()-3)
                 # Write the end of the json
                 f.write("\n]")
         os.chdir(old_dir)
