@@ -33,13 +33,13 @@ class AbstractHIFEvaluatorBot(AbstractEvaluatorBot):
                  log_file="",
                  max_num_states : int = 1000,
                  max_num_samples : int = 100,
-                 sampling_bias : float = 0,
+                 top_p_play : float = 0,
+                 top_p_weights : str = "uniform",
                  ):
         self.get_nmoves = True
         self.max_num_samples = max_num_samples
         self.max_num_states = max_num_states
-        self.sampling_bias = sampling_bias
-        super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file,max_num_states)
+        super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file,max_num_states,top_p_play,top_p_weights)
     
     @abstractmethod
     def evaluate_states(self, states : List[FullGameState]) -> List[float]:
@@ -107,7 +107,7 @@ class AbstractHIFEvaluatorBot(AbstractEvaluatorBot):
             states = [state]
         return states
     
-    def _get_move_prediction(self, move : str, get_n : bool = False) -> Tuple[Any,float]:
+    def _get_move_prediction(self, move : str) -> Tuple[Any,float]:
         """ Get a prediction for a moves best 'goodness' """
         plays, states, evals = self.get_possible_next_states(move)
         # Here there will be duplicate plays, and corresponding states and evals
@@ -138,8 +138,6 @@ class AbstractHIFEvaluatorBot(AbstractEvaluatorBot):
             for unique_play in unique_plays:
                 play_evals = [eval for play, eval in zip(plays, evals) if play == unique_play]
                 mean_eval = float(np.mean(play_evals))
-                #mean_eval += self.sampling_bias*len(self.moskaGame.card_monitor.get_sample_cards_from_deck(self,1,52))
-                mean_eval += self.sampling_bias if len(self.moskaGame.deck) > 0 else 0
                 mean_evals.append(mean_eval)
                 self.plog.debug(f"Sampled {len(evals)} possible states for {unique_play}")
                 #corresponding_states.append(states[plays.index(unique_play)])
@@ -150,15 +148,4 @@ class AbstractHIFEvaluatorBot(AbstractEvaluatorBot):
             evals = mean_evals
         if np.isnan(evals).any() or np.isinf(evals).any(): 
             raise Exception("Nan in mean evals!")
-        combined = list(zip(plays, evals))
-        try:
-            best = max(combined, key=lambda x : x[1])
-        except:
-            print("Combined: ", combined, flush=True)
-            print("Evals: ", evals, flush=True)
-            print("Plays: ", plays, flush=True)
-            raise Exception("Could not find best play")
-        
-        if get_n:
-            return best[0],best[1],len(plays)
-        return best[0],best[1]
+        return plays, evals

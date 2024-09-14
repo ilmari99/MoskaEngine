@@ -21,8 +21,9 @@ class NNHIFEvaluatorBot(AbstractHIFEvaluatorBot):
                  max_num_samples : int = 100,
                  pred_format : str ="new",
                  model_id : (str or int) = "all",
-                 sampling_bias : float = 0,
                  min_player : str = "",
+                 top_p_play : float = 0,
+                 top_p_weights : str = "uniform",
                  ):
         self.min_player = min_player
         self.pred_format = pred_format
@@ -31,7 +32,7 @@ class NNHIFEvaluatorBot(AbstractHIFEvaluatorBot):
         self.checked_min_pl_exists = False
         if not name:
             name = "NNEVHIF"
-        super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file, max_num_states, max_num_samples, sampling_bias)
+        super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file, max_num_states, max_num_samples, top_p_play, top_p_weights)
     
     def evaluate_states(self, states: List[FullGameState]) -> List[float]:
         if self.min_player:

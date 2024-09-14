@@ -22,7 +22,9 @@ class HeuristicEvaluatorBot(AbstractEvaluatorBot):
                  log_level=logging.INFO,
                  log_file="",
                  max_num_states : int = 1000,
-                 coefficients : Dict[str,float] = {}
+                 coefficients : Dict[str,float] = {},
+                 top_p_play : float = 0,
+                 top_p_weights : str = "uniform",
                  ):
         self.scorer : _ScoreCards = _ScoreCards(self,default_method="counter")
         self.coefficients = {
@@ -42,7 +44,7 @@ class HeuristicEvaluatorBot(AbstractEvaluatorBot):
             self.coefficients[coef] = value
         if not name:
             name = "HEV"
-        super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file, max_num_states)
+        super().__init__(moskaGame, name, delay, requires_graphic, log_level, log_file, max_num_states, top_p_play, top_p_weights)
     
     def _get_cards_possibly_in_deck(self, state : FullGameState) -> List[Card]:
         """ Get cards that are possibly in the deck, in this state. """
