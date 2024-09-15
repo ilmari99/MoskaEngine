@@ -527,6 +527,7 @@ class MoskaGame:
             "deck_left" : len(self.deck.cards),
             "cards_to_kill" : [c.as_str(symbol=False) for c in self.cards_to_fall],
             "killed_cards" : [c.as_str(symbol=False) for c in self.fell_cards],
+            "kopled_card" : "".join([c.as_str(symbol=False) for c in self.cards_to_fall if c.kopled]),
             "target" : self.get_target_player().name,
             "initiator" : self.get_initiating_player().name,
             "turn" : self.get_turn_player_name(),
