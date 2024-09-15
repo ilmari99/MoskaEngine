@@ -464,6 +464,7 @@ class AbstractPlayer(ABC):
                 try:
                     # Try to play moves, as long as a valid move is played.
                     # At _play_move, the self.ready is set to True
+                    current_hand = self.hand.cards.copy()
                     success, msg = self._play_move()    # Return (True, "") if a valid move, else (False, "<error>")
                     # NOTE: If a deterministic player can make invalid moves, it will get stuck in this loop.
                     # Players should only make valid moves, because currently invalid moves are handled by errors,
@@ -483,6 +484,7 @@ class AbstractPlayer(ABC):
                             print(msg, flush=True)
                         
                         success, msg = self._play_move()
+                    new_hand = self.hand.cards.copy()
                 # If an exception was raised for some reason. Invalid move errors are caught, and do not end up here.
                 except Exception as msg:
                     self.plog.error(traceback.format_exc())
@@ -491,9 +493,16 @@ class AbstractPlayer(ABC):
                     break
                 # The target player is not ready, until they play "EndTurn"
                 # Value of self.min_turns doesn't seem to have an effect.
-                if turns_taken_for_this_player < self.min_turns or (self is curr_target and self.moskaGame.cards_to_fall):
+                if (turns_taken_for_this_player < self.min_turns) or (self is curr_target and self.moskaGame.cards_to_fall) or (current_hand != new_hand):
                     self.ready = False
-                    self.plog.debug(f"Player set to NOT ready, because {f'{turns_taken_for_this_player} < {self.min_turns}' if turns_taken_for_this_player < self.min_turns else 'cards_to_fall'}")
+                    msg = f"Player set to NOT ready, because"
+                    if turns_taken_for_this_player < self.min_turns:
+                        msg += f" turns taken ({turns_taken_for_this_player} < {self.min_turns})"
+                    if self is curr_target and self.moskaGame.cards_to_fall:
+                        msg += f" cards on table"
+                    if current_hand != new_hand:
+                        msg += f" hand changed"
+                    self.plog.debug(msg)
                 # Set the players rank
                 self._set_rank()
                 # Check if self has finished, and hasn't played "EndTurn"
