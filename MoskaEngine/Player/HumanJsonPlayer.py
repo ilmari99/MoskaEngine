@@ -30,7 +30,7 @@ class HumanJsonPlayer(AbstractPlayer):
     def choose_move(self, playable) -> str:
         if len(playable) == 1 and playable[0] == "Skip":
             other_human_players = [player for player in self.moskaGame.players if player != self and "Human" in player.__class__.__name__]
-            if not other_human_players:
+            if (not other_human_players) or (self.moskaGame.get_target_player() == self):
                 return "Skip"
         # An exception for this player, is that it automatically Skips, if they are the target player
         if self is self.moskaGame.get_target_player() and "Skip" in playable:

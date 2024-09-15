@@ -89,6 +89,7 @@ class MoskaGame:
             gather_data (bool, optional): Whether to gather data or not. Defaults to True. The gathered data will be written to a csv file.
             model_paths (List[str], optional): The paths to the models to use. Defaults to [""]. If the paths are empty, no neural network based models can be used.
         """
+        self.evaluator_nn = None
         self.nturns = 0
         self.in_folder = in_folder
         if in_console and in_web:
@@ -157,23 +158,29 @@ class MoskaGame:
         # So this allows us to simulate games without tensorflow bots with optmizations
         # All output can not be disabled from tflite, without a custom build, so we just minimize it
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        import tensorflow as tf
         for path in self.model_paths:
             try:
-                interpreter = tf.lite.Interpreter(model_path=path)
+                interpreter, input_details, output_details = self._get_tflite_details(path)
             except Exception as e:
                 self.glog.error(f"Could not load model from path {path}.")
                 raise e
-            interpreter.allocate_tensors()
             self.interpreters.append(interpreter)
-            input_details = interpreter.get_input_details()
-            output_details = interpreter.get_output_details()
             self.output_details.append(output_details)
             self.input_details.append(input_details)
         self.glog.info(f"Loaded {self.model_paths} models.")
         self.glog.debug(f"Input details: {self.input_details}")
         self.glog.debug(f"Output details: {self.output_details}")
         return
+    
+    def _get_tflite_details(self, path : str):
+        """Get the interpreter, input details and output details from the model path.
+        """
+        import tensorflow as tf
+        interpreter = tf.lite.Interpreter(model_path=path)
+        interpreter.allocate_tensors()
+        input_details = interpreter.get_input_details()
+        output_details = interpreter.get_output_details()
+        return interpreter, input_details, output_details
     
     def model_predict(self, X : np.ndarray, model_id : (str or int) = "all") -> np.ndarray:
         """ Make a prediction with the model with the given id. The ID can either be an integer or a string (path to the model or 'all').
@@ -566,15 +573,33 @@ class MoskaGame:
         s += f"killed cards : {self.fell_cards}\n"
         return s
     
+    def _get_default_model_and_fmt(self) -> Tuple[str,str]:
+        """ Return the model_id and the pred_format of the first player that has a model_id and pred_format.
+        """
+        # Load the NN from
+        file = utils.get_model_file("Model-nn1-BB")
+        if len(self.interpreters) < 1:
+            interp, input_details, output_details = self._get_tflite_details(file)
+            file = utils.get_model_file("Model-nn1-BB")
+            self.interpreters.append(interp)
+            self.input_details.append(input_details)
+            self.output_details.append(output_details)
+        model_id = 0
+        pred_format = "bitmap"
+        return model_id, pred_format
+        
+    
     def _get_players_model_or_copy(self, pl):
         # If player doesn't have model_id or pred_format, use default values. Atleast one player needs to have these.
         if not hasattr(pl,"model_id") or not hasattr(pl,"pred_format"):
-            pl_to_copy = self.get_players_condition(lambda x : x.name != pl.name and hasattr(x,"model_id") and hasattr(x,"pred_format"))[0]
-            if not pl_to_copy:
-                self.EXIT_FLAG = True
-                raise AttributeError(f"Can not play with these settings (requires_graphic) if no player has a model.")
-            model_id = pl_to_copy.model_id
-            pred_format = pl_to_copy.pred_format
+            pl_to_copy = self.get_players_condition(lambda x : x.name != pl.name and hasattr(x,"model_id") and hasattr(x,"pred_format"))
+            if len(pl_to_copy) == 0:
+                model_id, pred_format = self._get_default_model_and_fmt()
+                #self.EXIT_FLAG = True
+                #raise AttributeError(f"Can not play with these settings (requires_graphic) if no player has a model.")
+            else:
+                model_id = pl_to_copy.model_id
+                pred_format = pl_to_copy.pred_format
         else:
             model_id = pl.model_id
             pred_format = pl.pred_format
