@@ -598,6 +598,7 @@ class MoskaGame:
                 #self.EXIT_FLAG = True
                 #raise AttributeError(f"Can not play with these settings (requires_graphic) if no player has a model.")
             else:
+                pl_to_copy = pl_to_copy[0]
                 model_id = pl_to_copy.model_id
                 pred_format = pl_to_copy.pred_format
         else:

@@ -29,7 +29,7 @@ def get_n_bot_players(n : int,
         List[PlayerWrapper]: A list of PlayerWrappers.
     """
     shared_kwargs = {"log_level" : logging.DEBUG,
-                     "delay":0.002,
+                     "delay":0.2,
                      "requires_graphic":True,
                         "max_num_states":8000,
                         "max_num_samples":1000,
@@ -41,9 +41,13 @@ def get_n_bot_players(n : int,
                              ]
     letter_to_number_converter = {"a":4, "e":3, "i":1, "o":0, "T": 7, "S": 5}
     players : List[PlayerWrapper] = []
+    current_base_names = []
     for i in range(n):
         # Select a random name from the list of possible names
         random_name = random.choice(set_of_possible_names)
+        while random_name in current_base_names:
+            random_name = random.choice(set_of_possible_names)
+        current_base_names.append(random_name)
         # For one of the names, replace the vowels with numbers
         random_name_subs = "".join([str(letter_to_number_converter.get(letter,letter)) for letter in random_name.lower()])
         # Shuffle the names
@@ -59,7 +63,7 @@ def get_test_players(human_names : List[str] = ["Human"],
     This is used for testing purposes.
     """
     shared_kwargs = {"log_level" : logging.INFO,
-                     "delay":0.02,
+                     "delay":0.2,
                      "requires_graphic":True,
                      }
     human_players = []
