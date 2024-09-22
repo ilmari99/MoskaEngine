@@ -52,7 +52,8 @@ def get_n_bot_players(n : int,
         random_name_subs = "".join([str(letter_to_number_converter.get(letter,letter)) for letter in random_name.lower()])
         # Shuffle the names
         random_names = random.sample([random_name,random_name_subs],2)
-        players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**shared_kwargs, **override_kwargs, **{"name":random_names[0]}}))
+        mandatory_kwargs = {"name":random_names[0], "log_file":f"{random_names[0]}.log"}
+        players.append(PlayerWrapper.from_config("NN2-HIF",-1,**{**shared_kwargs, **override_kwargs, **mandatory_kwargs}))
     return players
 
 def get_test_players(human_names : List[str] = ["Human"],
@@ -68,7 +69,7 @@ def get_test_players(human_names : List[str] = ["Human"],
                      }
     human_players = []
     for name in human_names:
-        human_players.append(PlayerWrapper(HumanTestPlayer, {**shared_kwargs, **{"name":name,"log_file":"Game-{x}-" +f"{name}" + ".log"}}))
+        human_players.append(PlayerWrapper(HumanTestPlayer, {**shared_kwargs, **{"name":name,"log_file":f"{name}.log"}}))
     bot_players = get_n_bot_players(4 - len(human_players),model_path=model_path,pred_format=pred_format)
     return human_players + bot_players
 
@@ -79,12 +80,14 @@ def get_multiple_human_players(human_names : List[str],
         """Returns a list of four players. First we create the human players, then we fill the rest with NNHIFEvaluatorBots.
         """
         human_kwargs = {"log_level" : logging.DEBUG,
-                     "delay":0.002,
+                     "delay":0.2,
                      "requires_graphic":True,
                      }
         human_players = []
         for name in human_names:
-            human_players.append(PlayerWrapper(HumanJsonPlayer, {**{"name":name},**human_kwargs},infer_log_file=True))
+            log_file = {"log_file":f"{name}.log"}
+            human_players.append(PlayerWrapper(HumanJsonPlayer, {**{"name":name},**human_kwargs,**log_file},infer_log_file=False, force_log_file=True))
+        print(f"Human players: {human_players}")
         # Fill the rest with NNHIFEvaluatorBots
         n_bots = 4 - len(human_players)
         bot_players = get_n_bot_players(n_bots,model_path=model_path,pred_format=pred_format,override_kwargs=human_kwargs)
@@ -95,6 +98,7 @@ def multiplayer_game(
         model_path = "Model-nn1-BB",
         pred_format="bitmap",
         game_id = 0,
+        folder="",
         test=False,
         ):
     """ Start a game with multiple human players. If we have less than 4 human players, the rest are NNHIFEvaluatorBots.
@@ -111,9 +115,11 @@ def multiplayer_game(
                                    pred_format=pred_format)
 
     cwd = os.getcwd()
-    folder = human_names[0] + "-Games"
+    
+    folder = folder if folder else os.path.join(cwd,"Games")
+    
     gamekwargs = {
-        "log_file" : "HumanGame-{x}.log",
+        "log_file" : "Game.log",
         "players" : players,
         "log_level" : logging.DEBUG,
         "timeout" : 2000,
@@ -131,7 +137,19 @@ def multiplayer_game(
     make_log_dir(folder,append=True)
     game = MoskaGame(**game_args)
     out = game.start()
+    # Check if there is a file Vectors/data*.csv
+    vectors_content = os.listdir("Vectors")
+    for file in vectors_content:
+        if file.startswith("data") and file.endswith(".csv"):
+            # Move it one up
+            os.rename(os.path.join("Vectors",file),os.path.join(".","vectors.csv"))
+            break
+    if os.path.exists("Vectors"):
+        # Remove Vectors
+        os.rmdir("Vectors")
+    
     os.chdir(cwd)
+    
     return out
 
 def parse_name_argument(name : str, sep=",") -> List[str]:
@@ -154,6 +172,7 @@ def parse_args(inp : List[str],skip_first = True):
     parser.add_argument("--name", type=str, default="Human", help="The name of the human player. Used in file naming and location.")
     parser.add_argument("--gameid", type=int, default=0, help="The id of the game. Used in file naming and location.")
     parser.add_argument("--test", action="store_true", help="Whether to actually use a human player or not")
+    parser.add_argument("--folder", type=str, default="", help="The folder where the games are saved.")
     args = parser.parse_args(inp[1:] if skip_first else inp)
     return args
 
@@ -164,10 +183,13 @@ def run_as_command_line_program(args):
     print(args.name)
     names = parse_name_argument(args.name)
     print(names)
-    out = multiplayer_game(human_names=names,test=args.test,game_id=args.gameid)
+    out = multiplayer_game(human_names=names,test=args.test,game_id=args.gameid,folder=args.folder)
     #out = play_as_human(model_path = "Model-nn1-BB",
     #                    human_name=args.name, test=args.test, game_id=args.gameid)
     if out:
         sys.exit(0)
     else:
         sys.exit(1)
+        
+if __name__ == "__main__":
+    run_as_command_line_program(sys.argv)

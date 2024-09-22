@@ -13,21 +13,23 @@ class PlayerWrapper:
     """ Wraps a player class and settings into a single object.
     Avoid ugly code, which uses a tuple of (player_class, settings : Callable) everywhere.
     """
-    def __init__(self, player_class: AbstractPlayer, settings: Dict[str, Any], infer_log_file = False, number = -1):
+    def __init__(self, player_class: AbstractPlayer, settings: Dict[str, Any], infer_log_file = False, number = -1, force_log_file = False) -> None:
         """ Settings should have '{x}' somewhere in it, which will be replaced by the game number.
         """
+        #print(f"Creating PlayerWrapper with {player_class} and {settings}")
         if not issubclass(player_class,AbstractPlayer):
             raise ValueError(f"Player class {player_class} is not recognized as any subclass of {AbstractPlayer}")
         if not isinstance(settings, dict):
             raise TypeError(f"Settings must be a dict, but is {settings}")
-        if infer_log_file and not 'log_file' in settings:
+        if 'log_file' not in settings and infer_log_file:
+            #print("Warning: No log file specified, but infer_log_file is set to True. Setting log file to Game_{x}-" + settings.get("name", player_class.__name__) + ".log")
             name = settings.get("name", player_class.__name__)
             settings["log_file"] = "Game_{x}-" + name + ".log"
         # If the user wants to create multiple instances of the same player,
         # add a number to the name and log file.
         if number >= 0:
             settings["name"] = settings.get("name", player_class.__name__) + f"_{number}"
-            if "log_file" in settings:
+            if "log_file" in settings and not force_log_file:
                 settings["log_file"] = settings["log_file"].split(".")[0] + f"_{number}.log"
             else:
                 Warning("No log file (or infer) specified, but number is specified.")
