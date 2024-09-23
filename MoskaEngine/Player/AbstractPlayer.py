@@ -27,7 +27,7 @@ class AbstractPlayer(ABC):
                  requires_graphic : bool = False,
                  log_level = logging.INFO,
                  log_file = "",
-                 min_turns : int = 1,
+                 min_turns : int = 0,
                  ):
         """ An abstract player, which contains the core functionality of an agent.
             Communication between game-player, enforcement of rules, logging, etc. etc. is handled automatically by the Game instance and this class.
