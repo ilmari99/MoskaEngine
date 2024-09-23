@@ -25,11 +25,12 @@ class CardMonitor:
     game : MoskaGame = None
     started : bool = False
         
-    def __init__(self,moskaGame : MoskaGame):
+    def __init__(self,moskaGame : MoskaGame, ignore_errors : bool = False) -> None:
         self.game = moskaGame
         self.player_cards = {}
         self.cards_kill_dict = {}
         self.started = False
+        self.ignore_errors = ignore_errors
         
     def start(self) -> None:
         """ Start tracking cards.
@@ -185,9 +186,12 @@ class CardMonitor:
                 self.game.glog.error(f"Other players actual hand and counted cards do not match on length")
                 self.game.glog.error(f"Other players actual hand: {other_player.hand.cards}")
                 self.game.glog.error(f"Other players counted cards: {self.player_cards[other_player.name]}")
-                raise Exception(f"Other players actual hand and counted cards do not match on length")
+                if not self.ignore_errors:
+                    raise Exception(f"Other players actual hand and counted cards do not match on length")
+                #raise Exception(f"Other players actual hand and counted cards do not match on length")
             if not all([c in self.player_cards[other_player.name] for c in other_player.hand.cards]):
-                raise Exception(f"Other players actual hand and counted cards do not match on cards")
+                if not self.ignore_errors:
+                    raise Exception(f"Other players actual hand and counted cards do not match on cards")
 
             other_player.plog.info(f"Updated known cards: {self.player_cards[other_player.name]}")
             other_player.plog.info(f"Actual hand: {other_player.hand.cards}")
@@ -256,7 +260,8 @@ class CardMonitor:
                     self.player_cards[player_name].remove(card)
                 except:
                     print(f"CardMonitor: Tried to remove {card} from {player_name}, but it was not in the players hand")
-                    raise ValueError(f"CardMonitor: Tried to remove {card} from {player_name}, but it was not in the players hand")
+                    if not self.ignore_errors:
+                        raise ValueError(f"CardMonitor: Tried to remove {card} from {player_name}, but it was not in the players hand")
         # If we want to add cards to the players hand
         else:
             self.player_cards[player_name] = cards + self.player_cards[player_name]

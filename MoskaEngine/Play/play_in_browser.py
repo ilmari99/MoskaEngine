@@ -100,6 +100,7 @@ def multiplayer_game(
         game_id = 0,
         folder="",
         test=False,
+        one_card_in_deck=False,
         ):
     """ Start a game with multiple human players. If we have less than 4 human players, the rest are NNHIFEvaluatorBots.
     """
@@ -130,6 +131,7 @@ def multiplayer_game(
         "in_console" : False,
         "in_web" : True,
         "gather_jsons" : True,
+        "one_card_in_deck" : one_card_in_deck,
     }
     # Convert general game arguments to game specific arguments (replace '{x}' with game_id)
     game_args = args_to_gamekwargs(gamekwargs,players,gameid = game_id,shuffle = True)
@@ -173,6 +175,7 @@ def parse_args(inp : List[str],skip_first = True):
     parser.add_argument("--gameid", type=int, default=0, help="The id of the game. Used in file naming and location.")
     parser.add_argument("--test", action="store_true", help="Whether to actually use a human player or not")
     parser.add_argument("--folder", type=str, default="", help="The folder where the games are saved.")
+    parser.add_argument("--one_card_in_deck", action="store_true", help="Whether to only leave one card in the deck.")
     args = parser.parse_args(inp[1:] if skip_first else inp)
     return args
 
@@ -183,7 +186,7 @@ def run_as_command_line_program(args):
     print(args.name)
     names = parse_name_argument(args.name)
     print(names)
-    out = multiplayer_game(human_names=names,test=args.test,game_id=args.gameid,folder=args.folder)
+    out = multiplayer_game(human_names=names,test=args.test,game_id=args.gameid,folder=args.folder, one_card_in_deck=args.one_card_in_deck)
     #out = play_as_human(model_path = "Model-nn1-BB",
     #                    human_name=args.name, test=args.test, game_id=args.gameid)
     if out:

@@ -76,6 +76,7 @@ class MoskaGame:
                  in_console : bool = False,
                  in_web : bool = False,
                  gather_jsons : bool = False,
+                 one_card_in_deck : bool = False,
                  ):
         """Initialize the game, by setting the deck, models, players, card monitor and some other variables.
         Args:
@@ -122,11 +123,12 @@ class MoskaGame:
         self.model_paths = model_paths
         self.set_model_vars_from_paths()
         self.random_seed = random_seed if random_seed else int(10000000*random.random())
+        self.one_card_in_deck = one_card_in_deck
         self.deck = deck if deck else StandardDeck(seed = self.random_seed)
         self.players = players
         self.timeout = timeout
         self.EXIT_FLAG = False
-        self.card_monitor = CardMonitor(self)
+        self.card_monitor = CardMonitor(self, ignore_errors=one_card_in_deck)
         self._set_turns()
         self.glog.info(f"Game initialization complete.")
 
@@ -810,6 +812,8 @@ class MoskaGame:
         self.trump_card = trump_card
         self.deck.place_to_bottom(self.trump_card)
         self.glog.info(f"Placed {self.trump_card} to bottom of deck.")
+        if self.one_card_in_deck:
+            self.deck.pop_cards(len(self.deck.cards)-2)
         return
     
     def get_player_state_vectors(self, shuffle = True, balance = True) -> List[List]:
